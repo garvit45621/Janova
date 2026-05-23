@@ -1,0 +1,13 @@
+{
+  "name": "janova-workspace",
+  "version": "1.0.0",
+  "description": "Workspace root for Janova GovTech system",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "start:frontend": "npm run start --prefix frontend",
+    "dev:backend": "cd backend && ./venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "start:backend": "cd backend && ./venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+  }
+}
