@@ -119,7 +119,7 @@ export default function LandingView() {
 
     if (res.success) {
       // User is logged in directly and welcome email is dispatched to their inbox
-      setLoginStep('email');
+      setLoginStep('credentials');
     } else {
       setError(res.message || 'Invalid credentials or request failed.');
     }
