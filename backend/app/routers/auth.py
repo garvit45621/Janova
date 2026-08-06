@@ -166,7 +166,7 @@ def dispatch_email(to_email: str, subject: str, html_body: str) -> bool:
 
     # 1. Try Gmail Free SMTP first (Delivers to ANY recipient inbox)
     gmail_user = os.environ.get("GMAIL_USER", "").strip()
-    gmail_pass = os.environ.get("GMAIL_APP_PASS", "").strip()
+    gmail_pass = os.environ.get("GMAIL_APP_PASS", "").replace(" ", "").strip()
     
     if gmail_user and gmail_pass:
         try:
