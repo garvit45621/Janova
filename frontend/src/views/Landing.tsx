@@ -6,7 +6,7 @@ import { AppContext } from '../context/AppContext';
 export default function LandingView() {
   const context = useContext(AppContext);
   if (!context) return null;
-  const { login, loginWithGoogle, sendLoginOtp, verifyLoginOtp, register } = context;
+  const { login, loginWithGoogle, sendLoginOtp, verifyLoginOtp, register, setActiveView } = context;
 
   const [authMode, setAuthMode] = useState<'landing' | 'login' | 'register'>('landing');
   const [email, setEmail] = useState('');
