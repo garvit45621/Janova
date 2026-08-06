@@ -9,7 +9,7 @@ interface LeafletMapInnerProps {
   complaints: Complaint[];
   selectedX: number;
   selectedY: number;
-  onMapClick: (x: number, y: number) => void;
+  onMapClick: (x: number, y: number, addressName?: string) => void;
 }
 
 export default function LeafletMapInner({ complaints, selectedX, selectedY, onMapClick }: LeafletMapInnerProps) {
@@ -17,10 +17,10 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerGroupRef = useRef<L.LayerGroup | null>(null);
   const clickMarkerRef = useRef<L.Marker | null>(null);
+  const userLocationCircleRef = useRef<L.Circle | null>(null);
 
   // Setup Leaflet icon fallback fixes
   useEffect(() => {
-    // Override default leaflet marker asset paths simply
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -29,10 +29,88 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
     });
   }, []);
 
+  const detectUserLocation = (map: L.Map) => {
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          if (!map || !(map as any)._container || !mapContainerRef.current) return;
+
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return;
+
+          const initialLat = 12.9716;
+          const initialLng = 77.5946;
+
+          try {
+            map.flyTo([lat, lng], 15, { animate: true, duration: 1.2 });
+          } catch (e) {
+            try {
+              map.setView([lat, lng], 15);
+            } catch (err) {}
+          }
+
+          // Render pulsating accuracy circle
+          if (userLocationCircleRef.current) {
+            userLocationCircleRef.current.setLatLng([lat, lng]);
+          } else {
+            userLocationCircleRef.current = L.circle([lat, lng], {
+              radius: Math.min(position.coords.accuracy || 150, 300),
+              color: '#38bdf8',
+              fillColor: '#38bdf8',
+              fillOpacity: 0.18,
+              weight: 2
+            }).addTo(map);
+          }
+
+          // Convert coordinates to relative integer coordinates
+          const x = Math.round((lat - initialLat) * 10000 + 250);
+          const y = Math.round((lng - initialLng) * 10000 + 150);
+
+          let addressName = `Detected GPS: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
+
+          // Reverse Geocode address lookup via OpenStreetMap Nominatim
+          try {
+            const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data && data.display_name) {
+                const parts = data.display_name.split(',');
+                addressName = parts.slice(0, 3).join(',').trim();
+              }
+            }
+          } catch (e) {
+            console.log('Reverse geocoding fallback used');
+          }
+
+          onMapClick(x, y, addressName);
+
+          // Place target marker
+          if (clickMarkerRef.current) {
+            clickMarkerRef.current.setLatLng([lat, lng]);
+          } else {
+            clickMarkerRef.current = L.marker([lat, lng], {
+              icon: L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: #06B6D4; width: 16px; height: 16px; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 0 14px #06B6D4;"></div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+              })
+            }).addTo(map);
+          }
+        },
+        (err) => {
+          console.warn('Geolocation permission/error:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+  };
+
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Initialize Map centered on a simulated city coordinate
+    // Initialize Map centered on city center default
     const initialLat = 12.9716;
     const initialLng = 77.5946;
     
@@ -42,9 +120,15 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
       zoomControl: true
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
+    const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'HJk29XEBIyfYSK1VO5zR';
+    const tileUrl = maptilerKey
+      ? `https://api.maptiler.com/maps/dataviz-dark/{z}/{x}/{y}.png?key=${maptilerKey}`
+      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+    L.tileLayer(tileUrl, {
+      attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      tileSize: 512,
+      zoomOffset: -1,
       maxZoom: 20
     }).addTo(map);
 
@@ -52,14 +136,37 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
     mapInstanceRef.current = map;
     markerGroupRef.current = markerGroup;
 
+    setTimeout(() => {
+      if (map && (map as any)._container) {
+        try {
+          map.invalidateSize();
+        } catch (e) {}
+      }
+    }, 150);
+
+    // Auto-detect user's GPS location on load
+    detectUserLocation(map);
+
     // Register Click Listener
-    map.on('click', (e: L.LeafletMouseEvent) => {
+    map.on('click', async (e: L.LeafletMouseEvent) => {
       const { lat, lng } = e.latlng;
-      // Convert coordinates simply to relative integer coordinates for database
       const x = Math.round((lat - initialLat) * 10000 + 250);
       const y = Math.round((lng - initialLng) * 10000 + 150);
       
-      onMapClick(x, y);
+      let addressName = `Location: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
+
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.display_name) {
+            const parts = data.display_name.split(',');
+            addressName = parts.slice(0, 3).join(',').trim();
+          }
+        }
+      } catch (err) {}
+
+      onMapClick(x, y, addressName);
 
       // Render temporary target marker
       if (clickMarkerRef.current) {
@@ -68,9 +175,9 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
         clickMarkerRef.current = L.marker(e.latlng, {
           icon: L.divIcon({
             className: 'custom-div-icon',
-            html: `<div style="background-color: #06B6D4; width: 14px; height: 14px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px #06B6D4;"></div>`,
-            iconSize: [14, 14],
-            iconAnchor: [7, 7]
+            html: `<div style="background-color: #06B6D4; width: 16px; height: 16px; border: 2.5px solid white; border-radius: 50%; box-shadow: 0 0 14px #06B6D4;"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
           })
         }).addTo(map);
       }
@@ -90,7 +197,6 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
     markerGroup.clearLayers();
 
     complaints.forEach((cmp) => {
-      // Map relative coordinates back to lat/lng for display
       const lat = 12.9716 + (cmp.x_coord - 250) / 10000;
       const lng = 77.5946 + (cmp.y_coord - 150) / 10000;
 
@@ -115,5 +221,16 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
     });
   }, [complaints]);
 
-  return <div ref={mapContainerRef} className="w-full h-full rounded-xl overflow-hidden shadow-inner border border-[#E2E8F0] dark:border-[#1E293B]" />;
+  return (
+    <div className="relative w-full h-full rounded-xl overflow-hidden shadow-inner border border-[#E2E8F0] dark:border-[#1E293B]">
+      <div ref={mapContainerRef} className="w-full h-full" />
+      <button
+        type="button"
+        onClick={() => mapInstanceRef.current && detectUserLocation(mapInstanceRef.current)}
+        className="absolute bottom-4 right-4 z-[1000] px-3.5 py-2 bg-slate-900/90 hover:bg-slate-800 text-sky-400 border border-sky-500/30 rounded-xl shadow-lg backdrop-blur-md font-sans text-xs font-bold flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+      >
+        <span>📍 Detect My Location</span>
+      </button>
+    </div>
+  );
 }

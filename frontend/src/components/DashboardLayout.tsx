@@ -6,15 +6,15 @@ import { AppContext } from '../context/AppContext';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const context = useContext(AppContext);
   if (!context) return null;
-  const { 
-    theme, 
-    toggleTheme, 
-    activeView, 
-    setActiveView, 
-    user, 
-    logout, 
-    notifications, 
-    updateNotificationStatus 
+  const {
+    theme,
+    toggleTheme,
+    activeView,
+    setActiveView,
+    user,
+    logout,
+    notifications,
+    updateNotificationStatus
   } = context;
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -26,6 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'voicevani', label: 'Janova Vani Voice AI', icon: '🎙️' },
     { id: 'services', label: 'Services Portal', icon: '🛒' },
     { id: 'benefits', label: 'Benefits Finder', icon: '🎁' },
     { id: 'vault', label: 'Document Vault', icon: '📂' },
@@ -33,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { id: 'business', label: 'Business Hub', icon: '🏢' },
     { id: 'complaints', label: 'Complaints Map', icon: '🗺️' },
     { id: 'calendar', label: 'Smart Calendar', icon: '📅' },
+    { id: 'emergency', label: 'Emergency Hub', icon: '🚨' },
   ];
 
   if (user && user.role === 'admin') {
@@ -55,16 +57,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     updateNotificationStatus();
   };
 
-  const pageTitle = menuItems.find(item => item.id === activeView)?.label || 
-                    (activeView === 'settings' ? 'Account Settings' : 'Workspace');
+  const pageTitle = menuItems.find(item => item.id === activeView)?.label ||
+    (activeView === 'settings' ? 'Account Settings' : 'Workspace');
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-[#080D1A] text-[#0F172A] dark:text-[#F8FAFC] transition-colors duration-300">
-      
+    <div className="flex min-h-screen bg-[#FAF6F0] dark:bg-[#080D1A] text-[#0F172A] dark:text-[#F8FAFC] transition-colors duration-300">
+
       {/* Sidebar (Desktop) */}
-      <aside className={`fixed top-0 bottom-0 left-0 z-30 flex flex-col justify-between border-r border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#0F1626] transition-all duration-300 ${
-        isSidebarCollapsed ? 'w-[78px]' : 'w-[260px]'
-      } hidden md:flex`}>
+      <aside className={`fixed top-0 bottom-0 left-0 z-30 flex flex-col justify-between border-r border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#0F1626] transition-all duration-300 ${isSidebarCollapsed ? 'w-[78px]' : 'w-[260px]'
+        } hidden md:flex`}>
         <div>
           <div className="flex h-[72px] items-center justify-between px-5 border-b border-[#E2E8F0] dark:border-[#1E293B]">
             <div className="flex items-center gap-3 cursor-pointer overflow-hidden" onClick={() => navigateTo('dashboard')}>
@@ -83,11 +84,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <button
                   key={item.id}
                   onClick={() => navigateTo(item.id)}
-                  className={`flex items-center gap-3.5 w-full rounded-xl px-4 py-3.5 text-xs font-bold transition-all ${
-                    isActive 
-                      ? 'bg-blue-600 text-white shadow-md' 
+                  className={`flex items-center gap-3.5 w-full rounded-xl px-4 py-3.5 text-xs font-bold transition-all ${isActive
+                      ? 'bg-blue-600 text-white shadow-md'
                       : 'text-[#475569] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#172033]'
-                  }`}
+                    }`}
                 >
                   <span className="text-sm shrink-0">{item.icon}</span>
                   {!isSidebarCollapsed && <span className="truncate">{item.label}</span>}
@@ -119,10 +119,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main Panel Content Area */}
-      <div className={`flex flex-col min-h-screen flex-1 transition-all duration-300 ${
-        isSidebarCollapsed ? 'md:ml-[78px]' : 'md:ml-[260px]'
-      }`}>
-        
+      <div className={`flex flex-col min-h-screen flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-[78px]' : 'md:ml-[260px]'
+        }`}>
+
         {/* Header Bar */}
         <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] bg-white/80 dark:bg-[#0F1626]/80 backdrop-blur-md px-6 md:px-8">
           <div className="flex items-center gap-4">
@@ -197,9 +196,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <button
                   key={item.id}
                   onClick={() => navigateTo(item.id)}
-                  className={`flex items-center gap-3.5 w-full rounded-xl px-4 py-3 text-xs font-bold transition-all ${
-                    activeView === item.id ? 'bg-blue-600 text-white shadow-md' : 'text-[#475569] dark:text-[#94A3B8]'
-                  }`}
+                  className={`flex items-center gap-3.5 w-full rounded-xl px-4 py-3 text-xs font-bold transition-all ${activeView === item.id ? 'bg-blue-600 text-white shadow-md' : 'text-[#475569] dark:text-[#94A3B8]'
+                    }`}
                 >
                   <span>{item.icon}</span>
                   <span>{item.label}</span>

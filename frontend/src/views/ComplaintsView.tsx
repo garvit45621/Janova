@@ -18,10 +18,14 @@ export default function ComplaintsView() {
   const [yCoord, setYCoord] = useState(150);
   const [error, setError] = useState('');
 
-  const handleMapSelection = (x: number, y: number) => {
+  const handleMapSelection = (x: number, y: number, addressName?: string) => {
     setXCoord(x);
     setYCoord(y);
-    setLocation(`Map Coordinates picked: [X: ${x}, Y: ${y}]`);
+    if (addressName) {
+      setLocation(addressName);
+    } else {
+      setLocation(`Picked Location: [X: ${x}, Y: ${y}]`);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {

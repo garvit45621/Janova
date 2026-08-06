@@ -26,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full dark">
-      <body className={`${dmSans.variable} ${spaceGrotesk.variable} min-h-full flex flex-col font-sans`}>
+    <html lang="en" className="h-full dark" suppressHydrationWarning>
+      <body className={`${dmSans.variable} ${spaceGrotesk.variable} min-h-full flex flex-col font-sans`} suppressHydrationWarning>
         <AppProvider>
           {children}
         </AppProvider>

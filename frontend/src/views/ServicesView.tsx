@@ -4,6 +4,25 @@ import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Service } from '../types';
 
+function getFallbackPortalUrl(title: string, category: string, officialUrl?: string): string {
+  if (officialUrl) return officialUrl;
+  const lower = title.toLowerCase();
+  if (lower.includes('birth')) return 'https://crsorgi.gov.in';
+  if (lower.includes('aadhaar')) return 'https://uidai.gov.in';
+  if (lower.includes('pan')) return 'https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html';
+  if (lower.includes('passport')) return 'https://www.passportindia.gov.in';
+  if (lower.includes('voter')) return 'https://voters.eci.gov.in';
+  if (lower.includes('driving') || lower.includes('license')) return 'https://parivahan.gov.in';
+  if (lower.includes('gst')) return 'https://www.gst.gov.in';
+  if (lower.includes('udyam') || lower.includes('msme')) return 'https://udyamregistration.gov.in';
+  if (lower.includes('income tax') || lower.includes('itr')) return 'https://eportal.incometax.gov.in';
+  if (lower.includes('scholarship')) return 'https://scholarships.gov.in';
+  if (lower.includes('health') || lower.includes('abha')) return 'https://abha.abdm.gov.in';
+  if (lower.includes('kisan')) return 'https://pmkisan.gov.in';
+  if (lower.includes('certificate')) return 'https://edistrict.delhigovt.nic.in';
+  return 'https://www.india.gov.in/my-government/services';
+}
+
 export default function ServicesView() {
   const context = useContext(AppContext);
   if (!context) return null;
@@ -14,14 +33,12 @@ export default function ServicesView() {
   const [activeState, setActiveState] = useState('All');
   const [activeEligibility, setActiveEligibility] = useState('All');
   const [savedServices, setSavedServices] = useState<number[]>([]);
+  const [redirectToast, setRedirectToast] = useState<string | null>(null);
   
-  // Modal application triggers
+  // Details Modal
   const [activeModal, setActiveModal] = useState<Service | null>(null);
-  const [modalStep, setModalStep] = useState(1);
-  const [formInputs, setFormInputs] = useState({ identifier: '', checkAgreement: false });
-  const [error, setError] = useState('');
 
-  const categories = ['All', 'Identity Documents', 'Certificates', 'Education', 'Business', 'Healthcare', 'Taxation'];
+  const categories = ['All', 'Identity Documents', 'Certificates', 'Education', 'Business', 'Healthcare', 'Taxation', 'Utilities & Housing', 'Welfare & Social Safety', 'Agriculture'];
   const states = ['All', 'Capital Region', 'West Shore', 'North Hills'];
   const eligibilities = ['All', 'Student', 'Homeowner', 'General Citizen'];
 
@@ -31,34 +48,18 @@ export default function ServicesView() {
     );
   };
 
-  const handleLaunchApply = (srv: Service) => {
-    setActiveModal(srv);
-    setModalStep(1);
-    setFormInputs({ identifier: '', checkAgreement: false });
-    setError('');
-  };
+  const handleLaunchApply = async (srv: Service) => {
+    const url = getFallbackPortalUrl(srv.title, srv.category, srv.official_url);
+    
+    // Register application in background
+    await submitServiceApplication(srv.title, srv.category);
+    
+    // Show quick toast banner
+    setRedirectToast(`Redirecting to official website for ${srv.title}...`);
+    setTimeout(() => setRedirectToast(null), 4000);
 
-  const handleNextStep = () => {
-    if (modalStep === 1) {
-      if (!formInputs.identifier) {
-        setError('Please provide validation identifier.');
-        return;
-      }
-      setModalStep(2);
-      setError('');
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!formInputs.checkAgreement) {
-      setError('Please acknowledge policy terms.');
-      return;
-    }
-
-    if (activeModal) {
-      await submitServiceApplication(activeModal.title, activeModal.category);
-      setActiveModal(null);
-    }
+    // Open official portal URL directly in a new window/tab
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const filteredServices = services.filter(srv => {
@@ -71,6 +72,13 @@ export default function ServicesView() {
   return (
     <div className="flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full animate-scale-in text-left">
       
+      {redirectToast && (
+        <div className="fixed top-20 right-6 z-50 bg-blue-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-scale-in">
+          <span>🚀</span>
+          <span>{redirectToast}</span>
+        </div>
+      )}
+
       {/* Search and Filters toolbar */}
       <div className="glass-card p-5 flex flex-col gap-5">
         
@@ -132,8 +140,10 @@ export default function ServicesView() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredServices.map((srv) => {
           const isSaved = savedServices.includes(srv.id);
+          const portalUrl = getFallbackPortalUrl(srv.title, srv.category, srv.official_url);
+
           return (
-            <div key={srv.id} className="glass-card flex flex-col justify-between p-5 gap-5 relative group">
+            <div key={srv.id} className="glass-card flex flex-col justify-between p-5 gap-5 relative group border border-[#E2E8F0] dark:border-[#1E293B] hover:border-blue-500/50 transition-all">
               <button 
                 onClick={() => toggleSaveService(srv.id)}
                 className={`absolute top-4 right-4 h-8 w-8 rounded-lg flex items-center justify-center border text-xs cursor-pointer transition-colors ${
@@ -150,19 +160,30 @@ export default function ServicesView() {
                   <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">{srv.description}</p>
                 </div>
                 
-                {/* Details checklist snippet */}
+                {/* Details snippet */}
                 <div className="flex flex-col gap-1 text-[10px] text-[#94A3B8] font-bold">
                   {srv.estimated_time && <div>⏱️ PROCESSING: <span className="text-[#475569] dark:text-[#E2E8F0] font-normal">{srv.estimated_time}</span></div>}
                   {srv.eligibility && <div>🎯 ELIGIBILITY: <span className="text-[#475569] dark:text-[#E2E8F0] font-normal">{srv.eligibility}</span></div>}
+                  <div className="truncate text-blue-500 font-mono text-[9px] mt-1">🌐 {portalUrl}</div>
                 </div>
               </div>
 
-              <div className="border-t border-[#E2E8F0]/50 dark:border-[#1E293B]/50 pt-4 mt-2 flex gap-3">
+              <div className="border-t border-[#E2E8F0]/50 dark:border-[#1E293B]/50 pt-4 mt-2 flex gap-2">
                 <button 
                   onClick={() => handleLaunchApply(srv)}
-                  className="btn btn-primary text-xs flex-1 cursor-pointer"
+                  className="btn btn-primary text-xs flex-1 cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  Apply Online
+                  <span>Apply Online</span>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </button>
+
+                <button 
+                  onClick={() => setActiveModal(srv)}
+                  className="btn btn-secondary text-xs cursor-pointer"
+                >
+                  Details
                 </button>
               </div>
             </div>
@@ -170,76 +191,71 @@ export default function ServicesView() {
         })}
       </div>
 
-      {/* MODAL APPLICATION DRAWER */}
+      {/* SERVICE DETAILS MODAL */}
       {activeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-[#080D1A]/50 backdrop-blur-sm" onClick={() => setActiveModal(null)} />
           
-          <div className="glass rounded-2xl w-full max-w-md shadow-2xl p-6 relative border border-[#E2E8F0]/30 dark:border-[#1E293B]/40 z-10 animate-scale-in flex flex-col gap-5">
+          <div className="glass rounded-2xl w-full max-w-lg shadow-2xl p-6 relative border border-[#E2E8F0]/30 dark:border-[#1E293B]/40 z-10 animate-scale-in flex flex-col gap-5">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
               <div className="flex flex-col">
                 <h3 className="font-heading text-sm font-bold">{activeModal.title}</h3>
-                <span className="text-[10px] text-[#94A3B8] uppercase font-bold mt-0.5">Application Step {modalStep} of 2</span>
+                <span className="text-[10px] text-[#94A3B8] uppercase font-bold mt-0.5">{activeModal.category}</span>
               </div>
               <button onClick={() => setActiveModal(null)}>✕</button>
             </div>
 
-            {error && <div className="p-3 bg-red-500/10 border border-red-500/20 text-[10px] font-semibold text-red-500">{error}</div>}
-
-            <div className="flex-1 py-2">
-              {modalStep === 1 && (
-                <div className="flex flex-col gap-4 animate-scale-in">
-                  <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">
-                    Provide your current identifier details to verify registry records.
-                  </p>
-                  <div className="form-group">
-                    <label className="form-label">Government Identification ID Number</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      placeholder="e.g. ID-8823102"
-                      value={formInputs.identifier}
-                      onChange={(e) => { setFormInputs(prev => ({ ...prev, identifier: e.target.value })); setError(''); }}
-                    />
-                  </div>
+            <div className="flex flex-col gap-4 text-xs text-[#475569] dark:text-[#94A3B8]">
+              <p className="leading-relaxed">{activeModal.description}</p>
+              
+              {activeModal.eligibility && (
+                <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                  <div className="font-bold text-blue-500 text-[11px] mb-1">Eligibility Criteria</div>
+                  <div>{activeModal.eligibility}</div>
                 </div>
               )}
 
-              {modalStep === 2 && (
-                <div className="flex flex-col gap-4 animate-scale-in">
-                  <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">
-                    Acknowledge the terms of application processing under regional policy terms.
-                  </p>
-                  <div className="p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F19] border border-[#E2E8F0] dark:border-[#1E293B] text-[10px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">
-                    By submitting this form, you authorize regional registry officers to access linked documents inside your secure Document Vault for verification audits.
-                  </div>
-                  <label className="form-checkbox text-xs font-semibold mt-2">
-                    <input 
-                      type="checkbox"
-                      checked={formInputs.checkAgreement}
-                      onChange={(e) => { setFormInputs(prev => ({ ...prev, checkAgreement: e.target.checked })); setError(''); }}
-                    />
-                    Acknowledge processing policies
-                  </label>
+              {activeModal.required_documents && activeModal.required_documents.length > 0 && (
+                <div>
+                  <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] mb-1.5">Required Documents:</div>
+                  <ul className="list-disc list-inside flex flex-col gap-1 text-[11px]">
+                    {activeModal.required_documents.map((doc, idx) => (
+                      <li key={idx}>{doc}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {activeModal.application_steps && activeModal.application_steps.length > 0 && (
+                <div>
+                  <div className="font-bold text-[#0F172A] dark:text-[#F8FAFC] mb-1.5">Application Process Steps:</div>
+                  <ol className="list-decimal list-inside flex flex-col gap-1 text-[11px]">
+                    {activeModal.application_steps.map((step, idx) => (
+                      <li key={idx}>{step}</li>
+                    ))}
+                  </ol>
                 </div>
               )}
             </div>
 
-            <div className="flex justify-between gap-4 border-t border-[#E2E8F0] dark:border-[#1E293B] pt-4 mt-2">
-              {modalStep > 1 && (
-                <button type="button" onClick={() => { setModalStep(s => s - 1); setError(''); }} className="btn btn-secondary flex-1">
-                  Back
-                </button>
-              )}
-              {modalStep < 2 ? (
-                <button type="button" onClick={handleNextStep} className="btn btn-primary flex-1">
-                  Continue
-                </button>
-              ) : (
-                <button type="button" onClick={handleSubmit} className="btn btn-primary flex-1">
-                  Submit Application
-                </button>
-              )}
+            <div className="flex justify-between gap-3 border-t border-[#E2E8F0] dark:border-[#1E293B] pt-4 mt-2">
+              <button type="button" onClick={() => setActiveModal(null)} className="btn btn-secondary flex-1">
+                Close
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  const srv = activeModal;
+                  setActiveModal(null);
+                  handleLaunchApply(srv);
+                }} 
+                className="btn btn-primary flex-1 flex items-center justify-center gap-1.5"
+              >
+                <span>Go to Official Website</span>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -247,3 +263,4 @@ export default function ServicesView() {
     </div>
   );
 }
+

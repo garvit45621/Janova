@@ -43,31 +43,20 @@ export default function VaultView() {
     }
   }, [documents]);
 
-  const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      startSimulateUpload(file.name);
+      setIsUploading(true);
+      setUploadProgress(30);
+      setUploadName(file.name);
+      const formattedSize = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+
+      setTimeout(() => setUploadProgress(70), 200);
+      
+      await uploadFile(file.name, uploadCategory, formattedSize, file);
+      setUploadProgress(100);
+      setTimeout(() => setIsUploading(false), 400);
     }
-  };
-
-  const startSimulateUpload = (fileName: string) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    setUploadName(fileName);
-
-    const interval = setInterval(() => {
-      setUploadProgress(p => {
-        if (p >= 100) {
-          clearInterval(interval);
-          setTimeout(async () => {
-            await uploadFile(fileName, uploadCategory, `${(Math.random() * 3 + 1).toFixed(1)} MB`);
-            setIsUploading(false);
-          }, 300);
-          return 100;
-        }
-        return p + 20;
-      });
-    }, 150);
   };
 
   const handleShareSubmit = async (e: React.FormEvent) => {

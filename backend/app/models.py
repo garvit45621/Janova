@@ -60,6 +60,7 @@ class Service(Base):
     required_documents = Column(JSON, default=list)
     estimated_time = Column(String(100))
     application_steps = Column(JSON, default=list)
+    official_url = Column(String(500), nullable=True)
 
 class Scheme(Base):
     __tablename__ = "schemes"
@@ -161,3 +162,53 @@ class Checklist(Base):
     checked_items = Column(JSON, default=dict)
 
     user = relationship("User", back_populates="checklists")
+
+class EmergencyAlert(Base):
+    __tablename__ = "emergency_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    severity = Column(String(50), nullable=False) # critical, high, moderate, info
+    category = Column(String(100), nullable=False) # Weather, Flood, Power Outage, Health, Traffic
+    location = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    safety_steps = Column(JSON, default=list)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class EmergencyHelpline(Base):
+    __tablename__ = "emergency_helplines"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    category = Column(String(100), nullable=False) # General Emergency, Medical, Police, Fire, Disaster, Women Safety, Cyber
+    number = Column(String(50), nullable=False)
+    description = Column(Text)
+    icon = Column(String(50))
+
+class ShelterLocation(Base):
+    __tablename__ = "shelter_locations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    address = Column(String(255), nullable=False)
+    x_coord = Column(Integer, nullable=False)
+    y_coord = Column(Integer, nullable=False)
+    capacity = Column(Integer, nullable=False)
+    occupancy = Column(Integer, default=0)
+    status = Column(String(50), default="open") # open, full, standby
+    amenities = Column(JSON, default=list) # Medical, Food, Clean Water, Power Generator, Beds
+    contact_phone = Column(String(50))
+
+class SOSAlert(Base):
+    __tablename__ = "sos_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    user_name = Column(String(255))
+    user_phone = Column(String(50))
+    location = Column(String(255))
+    status = Column(String(50), default="dispatched")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")

@@ -24,6 +24,9 @@ dist-ssr
 *.sw?
 
 # Project custom exclusions
+.env
+*.env
+.env.local
 .vite/
 backend/venv/
 __pycache__/

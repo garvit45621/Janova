@@ -2,6 +2,7 @@
 
 import React, { createContext, useState, useEffect } from 'react';
 import { User, Document, Service, Scheme, Complaint, Application, Deadline, Notification, BusinessTemplate, LifeEvent, Checklist } from '../types';
+import { API_BASE_URL } from '../config/api';
 
 interface AppContextType {
   user: User | null;
@@ -19,11 +20,14 @@ interface AppContextType {
   setActiveView: (view: string) => void;
   toggleTheme: () => void;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: (email: string, name?: string, photo?: string) => Promise<boolean>;
+  sendLoginOtp: (email: string, password: string) => Promise<{ success: boolean; message?: string; otp_code?: string }>;
+  verifyLoginOtp: (email: string, otp: string) => Promise<{ success: boolean; message?: string }>;
   register: (name: string, email: string, phone: string, address: string, password: string) => Promise<boolean>;
   logout: () => void;
   reloadUserData: () => Promise<void>;
   submitServiceApplication: (title: string, category: string) => Promise<void>;
-  uploadFile: (name: string, category: string, size: string) => Promise<void>;
+  uploadFile: (name: string, category: string, size: string, fileObj?: File) => Promise<void>;
   removeFile: (id: number) => Promise<void>;
   submitCivicComplaint: (title: string, category: string, description: string, location: string, x: number, y: number) => Promise<void>;
   upvoteCivicComplaint: (id: number) => Promise<void>;
@@ -86,19 +90,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchStaticData = async () => {
     try {
-      const resSrv = await fetch('http://localhost:8000/api/services/list');
+      const resSrv = await fetch('${API_BASE_URL}/api/services/list');
       if (resSrv.ok) setServices(await resSrv.json());
 
-      const resSch = await fetch('http://localhost:8000/api/services/schemes');
+      const resSch = await fetch('${API_BASE_URL}/api/services/schemes');
       if (resSch.ok) setSchemes(await resSch.json());
 
-      const resBiz = await fetch('http://localhost:8000/api/services/business/templates');
+      const resBiz = await fetch('${API_BASE_URL}/api/services/business/templates');
       if (resBiz.ok) setBizTemplates(await resBiz.json());
 
-      const resEv = await fetch('http://localhost:8000/api/services/life-events');
+      const resEv = await fetch('${API_BASE_URL}/api/services/life-events');
       if (resEv.ok) setLifeEvents(await resEv.json());
 
-      const resCmp = await fetch('http://localhost:8000/api/complaints/list');
+      const resCmp = await fetch('${API_BASE_URL}/api/complaints/list');
       if (resCmp.ok) setComplaints(await resCmp.json());
     } catch (e) {
       console.warn("Backend connection failed, using dummy static sets.", e);
@@ -109,22 +113,22 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     try {
       // Fetch Documents
-      const resDoc = await fetch(`http://localhost:8000/api/vault/${user.id}`);
+      const resDoc = await fetch(`${API_BASE_URL}/api/vault/${user.id}`);
       if (resDoc.ok) {
         const data = await resDoc.json();
         setDocuments(data.documents || []);
       }
 
       // Fetch Applications
-      const resApp = await fetch(`http://localhost:8000/api/services/applications/${user.id}`);
+      const resApp = await fetch(`${API_BASE_URL}/api/services/applications/${user.id}`);
       if (resApp.ok) setApplications(await resApp.json());
 
       // Fetch Deadlines
-      const resDl = await fetch(`http://localhost:8000/api/calendar/${user.id}`);
+      const resDl = await fetch(`${API_BASE_URL}/api/calendar/${user.id}`);
       if (resDl.ok) setDeadlines(await resDl.json());
 
       // Reload complaints
-      const resCmp = await fetch('http://localhost:8000/api/complaints/list');
+      const resCmp = await fetch('${API_BASE_URL}/api/complaints/list');
       if (resCmp.ok) setComplaints(await resCmp.json());
 
     } catch (e) {
@@ -132,9 +136,66 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const sendLoginOtp = async (email: string, password: string): Promise<{ success: boolean; message?: string; otp_code?: string }> => {
+    try {
+      const res = await fetch('${API_BASE_URL}/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        return { success: true, message: data.message, otp_code: data.otp_code };
+      }
+      return { success: false, message: data.detail || 'Failed to send OTP code.' };
+    } catch (e) {
+      console.error("sendLoginOtp failed", e);
+      return { success: false, message: 'Server connection error.' };
+    }
+  };
+
+  const verifyLoginOtp = async (email: string, otp: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const res = await fetch('${API_BASE_URL}/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+        localStorage.setItem('janova-user', JSON.stringify(data.user));
+        return { success: true };
+      }
+      return { success: false, message: data.detail || 'Invalid verification code.' };
+    } catch (e) {
+      console.error("verifyLoginOtp failed", e);
+      return { success: false, message: 'Server connection error.' };
+    }
+  };
+
+  const loginWithGoogle = async (email: string, name?: string, photo?: string): Promise<boolean> => {
+    try {
+      const res = await fetch('${API_BASE_URL}/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, photo })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        localStorage.setItem('janova-user', JSON.stringify(data.user));
+        return true;
+      }
+    } catch (e) {
+      console.error("Google Login failed", e);
+    }
+    return false;
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const res = await fetch('http://localhost:8000/api/auth/login', {
+      const res = await fetch('${API_BASE_URL}/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -153,7 +214,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const register = async (name: string, email: string, phone: string, address: string, password: string): Promise<boolean> => {
     try {
-      const res = await fetch('http://localhost:8000/api/auth/register', {
+      const res = await fetch('${API_BASE_URL}/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, phone, address, password })
@@ -179,7 +240,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const submitServiceApplication = async (title: string, category: string) => {
     if (!user) return;
     try {
-      const res = await fetch('http://localhost:8000/api/services/apply', {
+      const res = await fetch('${API_BASE_URL}/api/services/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, title, category })
@@ -192,7 +253,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const uploadFile = async (name: string, category: string, size: string) => {
+  const uploadFile = async (name: string, category: string, size: string, fileObj?: File) => {
     if (!user) return;
     try {
       const body = new FormData();
@@ -200,8 +261,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       body.append('name', name);
       body.append('category', category);
       body.append('size', size);
+      if (fileObj) {
+        body.append('file', fileObj);
+      }
 
-      const res = await fetch('http://localhost:8000/api/vault/upload', {
+      const res = await fetch('${API_BASE_URL}/api/vault/upload', {
         method: 'POST',
         body
       });
@@ -215,7 +279,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const removeFile = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/vault/delete/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/vault/delete/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -229,7 +293,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const submitCivicComplaint = async (title: string, category: string, description: string, location: string, x: number, y: number) => {
     if (!user) return;
     try {
-      const res = await fetch('http://localhost:8000/api/complaints/create', {
+      const res = await fetch('${API_BASE_URL}/api/complaints/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, title, category, description, location, x_coord: x, y_coord: y })
@@ -244,7 +308,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const upvoteCivicComplaint = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/complaints/upvote/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/upvote/${id}`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -258,7 +322,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const createPersonalDeadline = async (title: string, date: string, type: string, urgency: string) => {
     if (!user) return;
     try {
-      const res = await fetch('http://localhost:8000/api/calendar/create', {
+      const res = await fetch('${API_BASE_URL}/api/calendar/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, title, date, type, urgency })
@@ -279,7 +343,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const updateUserProfile = async (name: string, phone: string, address: string, prefs: any, twoFactor: boolean) => {
     if (!user) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/auth/profile/${user.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name: name, phone, address, notification_preferences: prefs, two_factor_enabled: twoFactor })
@@ -319,6 +383,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       setActiveView,
       toggleTheme,
       login,
+      loginWithGoogle,
+      sendLoginOtp,
+      verifyLoginOtp,
       register,
       logout,
       reloadUserData,

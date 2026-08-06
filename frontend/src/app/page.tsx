@@ -17,6 +17,8 @@ import ComplaintsView from '../views/ComplaintsView';
 import CalendarView from '../views/CalendarView';
 import SettingsView from '../views/SettingsView';
 import AdminView from '../views/AdminView';
+import EmergencyView from '../views/EmergencyView';
+import VoiceVaniView from '../views/VoiceVaniView';
 
 function WorkspaceContent() {
   const context = useContext(AppContext);
@@ -32,6 +34,8 @@ function WorkspaceContent() {
     switch (activeView) {
       case 'dashboard':
         return <DashboardView />;
+      case 'voicevani':
+        return <VoiceVaniView />;
       case 'services':
         return <ServicesView />;
       case 'benefits':
@@ -46,6 +50,8 @@ function WorkspaceContent() {
         return <ComplaintsView />;
       case 'calendar':
         return <CalendarView />;
+      case 'emergency':
+        return <EmergencyView />;
       case 'settings':
         return <SettingsView />;
       case 'admin':

@@ -70,10 +70,28 @@ export default function DashboardView() {
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={() => setActiveView('emergency')} className="btn bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+            <span>🚨</span> Emergency Hub
+          </button>
           <button onClick={() => setActiveView('services')} className="btn btn-primary shadow-lg shadow-blue-500/15">
             Apply for Services
           </button>
         </div>
+      </div>
+
+      {/* Emergency Flash Alert Banner */}
+      <div 
+        onClick={() => setActiveView('emergency')}
+        className="rounded-2xl bg-red-950/40 border border-red-500/30 p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-red-950/60 transition-all text-left"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-3 w-3 rounded-full bg-red-500 animate-ping shrink-0" />
+          <div className="flex flex-col">
+            <span className="text-xs font-extrabold text-red-400">CRITICAL CIVIC ADVISORY: Flash Flooding Alert</span>
+            <span className="text-[10px] text-red-200/70">Bengaluru Urban & Low-Lying Eastern Districts • Tap to view emergency protocols & shelters</span>
+          </div>
+        </div>
+        <span className="text-xs font-bold text-red-400 shrink-0">View Emergency Hub →</span>
       </div>
 
       {/* Widgets Grid */}

@@ -36,6 +36,7 @@ export interface Service {
   required_documents: string[];
   estimated_time?: string;
   application_steps: string[];
+  official_url?: string;
 }
 
 export interface Scheme {
@@ -127,4 +128,38 @@ export interface Checklist {
   user_id: number;
   life_event_id: number;
   checked_items: Record<string, boolean>;
+}
+
+export interface EmergencyAlert {
+  id: number;
+  title: string;
+  severity: 'critical' | 'high' | 'moderate' | 'info';
+  category: 'Weather' | 'Power Outage' | 'Health' | 'Traffic' | 'Flood';
+  location: string;
+  description: string;
+  safety_steps: string[];
+  active: boolean;
+  created_at: string;
+}
+
+export interface EmergencyHelpline {
+  id: number;
+  name: string;
+  category: string;
+  number: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface ShelterLocation {
+  id: number;
+  name: string;
+  address: string;
+  x_coord: number;
+  y_coord: number;
+  capacity: number;
+  occupancy: number;
+  status: 'open' | 'full' | 'standby';
+  amenities: string[];
+  contact_phone?: string;
 }

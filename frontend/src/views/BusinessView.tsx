@@ -174,7 +174,7 @@ export default function BusinessView() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="font-sans font-bold text-[#94A3B8] uppercase text-[9px] block">Filing Date</span>
-                  <span className="font-bold">{new Date().toISOString().split('T')[0]}</span>
+                  <span className="font-bold" suppressHydrationWarning>{new Date().toISOString().split('T')[0]}</span>
                 </div>
                 <div>
                   <span className="font-sans font-bold text-[#94A3B8] uppercase text-[9px] block">Filing License ID</span>
