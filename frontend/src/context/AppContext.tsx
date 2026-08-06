@@ -90,19 +90,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchStaticData = async () => {
     try {
-      const resSrv = await fetch('${API_BASE_URL}/api/services/list');
+      const resSrv = await fetch(`${API_BASE_URL}/api/services/list`);
       if (resSrv.ok) setServices(await resSrv.json());
 
-      const resSch = await fetch('${API_BASE_URL}/api/services/schemes');
+      const resSch = await fetch(`${API_BASE_URL}/api/services/schemes`);
       if (resSch.ok) setSchemes(await resSch.json());
 
-      const resBiz = await fetch('${API_BASE_URL}/api/services/business/templates');
+      const resBiz = await fetch(`${API_BASE_URL}/api/services/business/templates`);
       if (resBiz.ok) setBizTemplates(await resBiz.json());
 
-      const resEv = await fetch('${API_BASE_URL}/api/services/life-events');
+      const resEv = await fetch(`${API_BASE_URL}/api/services/life-events`);
       if (resEv.ok) setLifeEvents(await resEv.json());
 
-      const resCmp = await fetch('${API_BASE_URL}/api/complaints/list');
+      const resCmp = await fetch(`${API_BASE_URL}/api/complaints/list`);
       if (resCmp.ok) setComplaints(await resCmp.json());
     } catch (e) {
       console.warn("Backend connection failed, using dummy static sets.", e);
@@ -128,7 +128,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       if (resDl.ok) setDeadlines(await resDl.json());
 
       // Reload complaints
-      const resCmp = await fetch('${API_BASE_URL}/api/complaints/list');
+      const resCmp = await fetch(`${API_BASE_URL}/api/complaints/list`);
       if (resCmp.ok) setComplaints(await resCmp.json());
 
     } catch (e) {
@@ -138,7 +138,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const sendLoginOtp = async (email: string, password: string): Promise<{ success: boolean; message?: string; otp_code?: string }> => {
     try {
-      const res = await fetch('${API_BASE_URL}/api/auth/send-otp', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -156,7 +156,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const verifyLoginOtp = async (email: string, otp: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const res = await fetch('${API_BASE_URL}/api/auth/verify-otp', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp })
@@ -176,7 +176,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loginWithGoogle = async (email: string, name?: string, photo?: string): Promise<boolean> => {
     try {
-      const res = await fetch('${API_BASE_URL}/api/auth/google', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name, photo })
@@ -195,7 +195,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const res = await fetch('${API_BASE_URL}/api/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -214,7 +214,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const register = async (name: string, email: string, phone: string, address: string, password: string): Promise<boolean> => {
     try {
-      const res = await fetch('${API_BASE_URL}/api/auth/register', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, phone, address, password })
@@ -240,7 +240,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const submitServiceApplication = async (title: string, category: string) => {
     if (!user) return;
     try {
-      const res = await fetch('${API_BASE_URL}/api/services/apply', {
+      const res = await fetch(`${API_BASE_URL}/api/services/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, title, category })
@@ -265,7 +265,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         body.append('file', fileObj);
       }
 
-      const res = await fetch('${API_BASE_URL}/api/vault/upload', {
+      const res = await fetch(`${API_BASE_URL}/api/vault/upload`, {
         method: 'POST',
         body
       });
@@ -293,7 +293,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const submitCivicComplaint = async (title: string, category: string, description: string, location: string, x: number, y: number) => {
     if (!user) return;
     try {
-      const res = await fetch('${API_BASE_URL}/api/complaints/create', {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, title, category, description, location, x_coord: x, y_coord: y })
@@ -322,7 +322,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const createPersonalDeadline = async (title: string, date: string, type: string, urgency: string) => {
     if (!user) return;
     try {
-      const res = await fetch('${API_BASE_URL}/api/calendar/create', {
+      const res = await fetch(`${API_BASE_URL}/api/calendar/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, title, date, type, urgency })
