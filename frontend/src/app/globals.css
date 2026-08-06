@@ -2,6 +2,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     --bg-primary: #FAF6F0; /* Light Creamish Background */
     --bg-secondary: #FFFFFF; /* Pure White Card Container */
     --bg-tertiary: #F3EFE6; /* Warm Cream Accent Container */
@@ -34,6 +35,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --bg-primary: #0B0F19; /* Deep Slate Blue */
     --bg-secondary: #0F1626; /* Darker Slate Blue */
     --bg-tertiary: #172033;
