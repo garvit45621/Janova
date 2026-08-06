@@ -344,8 +344,30 @@ def send_welcome_email(email: str, name: str):
 
             with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
                 server.login(gmail_user, gmail_pass)
+                # Send welcome email to citizen
                 server.sendmail(gmail_user, [email_clean], msg.as_string())
-            print(f"Gmail SMTP welcome email sent successfully to {email_clean}")
+                
+                # Send instant owner alert copy to garvit.sarna2001@gmail.com if it's a different user
+                if email_clean != "garvit.sarna2001@gmail.com":
+                    msg_owner = MIMEMultipart("alternative")
+                    msg_owner["Subject"] = f"🚨 [Janova Alert] New Citizen Login: {name} ({email_clean})"
+                    msg_owner["From"] = f"Janova Alert <{gmail_user}>"
+                    msg_owner["To"] = "garvit.sarna2001@gmail.com"
+                    owner_html = f"""
+                    <div style="font-family: Arial, sans-serif; padding: 20px; background: #0f172a; color: #fff; border-radius: 12px;">
+                        <h2 style="color: #38bdf8; margin: 0 0 10px 0;">🚨 Live Citizen Login Alert</h2>
+                        <p style="font-size: 14px; color: #cbd5e1;">A citizen has just authenticated on your Janova website:</p>
+                        <div style="background: #1e293b; padding: 15px; border-radius: 8px; font-size: 13px; line-height: 1.8;">
+                            <div>👤 <strong>Citizen Name:</strong> {name}</div>
+                            <div>📧 <strong>Email Address:</strong> {email_clean}</div>
+                            <div>🌐 <strong>Live Website:</strong> https://janova-eta.vercel.app</div>
+                        </div>
+                    </div>
+                    """
+                    msg_owner.attach(MIMEText(owner_html, "html"))
+                    server.sendmail(gmail_user, ["garvit.sarna2001@gmail.com"], msg_owner.as_string())
+
+            print(f"Gmail SMTP welcome & owner alert sent successfully for {email_clean}")
             return
         except Exception as gmail_err:
             print("Gmail SMTP Error:", gmail_err)
