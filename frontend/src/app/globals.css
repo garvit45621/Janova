@@ -37,9 +37,9 @@
   }
 
   .dark {
-    color-scheme: dark;
-    --bg-primary: #0B0F19; /* Deep Slate Blue */
-    --bg-secondary: #0F1626; /* Darker Slate Blue */
+    color-scheme: light;
+    --bg-primary: #FAF6F0; /* Signature Warm Cream Background */
+    --bg-secondary: #FFFFFF; /* Pure White Card Container */
     --bg-tertiary: #172033;
     --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;

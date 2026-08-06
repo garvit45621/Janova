@@ -212,7 +212,7 @@ export default function LandingView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6F0] dark:bg-[#080D1A] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col justify-between relative overflow-hidden transition-colors">
+    <div className="min-h-screen bg-[#FAF6F0] text-[#0F172A] flex flex-col justify-between relative overflow-hidden transition-colors">
       
       {/* Background decorations */}
       <div className="absolute top-[10%] left-[-10%] w-[350px] h-[350px] bg-amber-500/10 dark:bg-blue-600/15 rounded-full blur-[80px] pointer-events-none" />

@@ -61,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     (activeView === 'settings' ? 'Account Settings' : 'Workspace');
 
   return (
-    <div className="flex min-h-screen bg-[#FAF6F0] dark:bg-[#080D1A] text-[#0F172A] dark:text-[#F8FAFC] transition-colors duration-300">
+    <div className="flex min-h-screen bg-[#FAF6F0] text-[#0F172A] transition-colors duration-300">
 
       {/* Sidebar (Desktop) */}
       <aside className={`fixed top-0 bottom-0 left-0 z-30 flex flex-col justify-between border-r border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#0F1626] transition-all duration-300 ${isSidebarCollapsed ? 'w-[78px]' : 'w-[260px]'
