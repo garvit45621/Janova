@@ -130,33 +130,28 @@ def send_otp(req: SendOTPRequest, db: Session = Depends(get_db)):
         user.hashed_password = req.password
         db.commit()
 
-    # Generate 6-digit numeric OTP
-    otp_code = f"{random.randint(100000, 999999)}"
-    expires_at = time.time() + 300  # Valid for 5 minutes
-    
-    otp_store[email_clean] = {
-        "code": otp_code,
-        "expires_at": expires_at
-    }
-    
-    otp_html = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #0f172a; color: #ffffff;">
-        <h2 style="color: #38bdf8; margin-top: 0;">Janova GovTech OS Verification Code</h2>
-        <p style="color: #94a3b8; font-size: 14px;">Your one-time login verification code is:</p>
-        <div style="background: #1e293b; padding: 16px; border-radius: 8px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #38bdf8; margin: 20px 0;">
-            {otp_code}
-        </div>
-        <p style="color: #64748b; font-size: 12px;">This code will expire in 5 minutes. If you did not request this login code, please ignore this email.</p>
-    </div>
-    """
-    
-    email_sent = dispatch_email(req.email, f"Janova Portal Login Code: {otp_code}", otp_html)
+    name_part = email_clean.split('@')[0].replace('.', ' ').title()
+
+    # Dispatch official welcome email directly to citizen's inbox
+    send_welcome_email(email_clean, name_part)
+
+    profile = db.query(Profile).filter(Profile.user_id == user.id).first()
 
     return {
         "status": "success",
-        "message": f"Verification code sent to {req.email}",
-        "otp_code": otp_code if not email_sent else None,
-        "email_sent": email_sent
+        "message": f"Welcome email sent to {req.email}",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "name": profile.full_name if profile else name_part,
+            "citizenId": profile.citizen_id if profile else "JV-982-110",
+            "phone": profile.phone if profile else "+91 9876543210",
+            "address": profile.address if profile else "New Citizen Registry",
+            "photo": profile.photo if profile else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop",
+            "notificationPreferences": profile.notification_preferences if profile else {"email": True, "sms": True, "push": False},
+            "twoFactorEnabled": profile.two_factor_enabled if profile else True
+        }
     }
 
 def dispatch_email(to_email: str, subject: str, html_body: str) -> bool:

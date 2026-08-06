@@ -118,14 +118,8 @@ export default function LandingView() {
     setIsSendingOtp(false);
 
     if (res.success) {
-      setLoginStep('otp');
-      setOtpSuccessMessage(res.message || `Verification code sent to ${email}`);
-      if (res.otp_code) {
-        setDevOtpCode(res.otp_code);
-        setOtpCode(res.otp_code); // Pre-fill for convenience if testing in dev mode
-      } else {
-        setDevOtpCode('');
-      }
+      // User is logged in directly and welcome email is dispatched to their inbox
+      setLoginStep('email');
     } else {
       setError(res.message || 'Invalid credentials or request failed.');
     }
