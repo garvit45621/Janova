@@ -211,24 +211,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const loginWithGoogle = async (email: string, name?: string, photo?: string): Promise<boolean> => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, photo })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-        localStorage.setItem('janova-user', JSON.stringify(data.user));
-        return true;
-      }
-    } catch (e) {
-      console.warn("Google Login fallback active:", e);
-    }
-
     const namePart = name || email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const fallbackUser = {
+    const userObj = {
       id: 1,
       email: email,
       role: 'user',
@@ -240,8 +224,22 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       notificationPreferences: { email: true, sms: true, push: false },
       twoFactorEnabled: true
     };
-    setUser(fallbackUser);
-    localStorage.setItem('janova-user', JSON.stringify(fallbackUser));
+    
+    // Immediately log in user on frontend so UI is smooth & responsive
+    setUser(userObj);
+    localStorage.setItem('janova-user', JSON.stringify(userObj));
+
+    // Dispatch background request to backend to send real Welcome Email via Gmail SMTP
+    try {
+      fetch(`${API_BASE_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: namePart, photo })
+      }).catch(err => console.warn("Background email trigger:", err));
+    } catch (e) {
+      console.warn("Google Login background email trigger error:", e);
+    }
+
     return true;
   };
 
