@@ -56,8 +56,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Load theme and user from storage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('janova-theme') as 'light' | 'dark';
-    if (savedTheme) setTheme(savedTheme);
+    // Reset to light mode by default for warm cream aesthetics
+    setTheme('light');
+    localStorage.setItem('janova-theme', 'light');
 
     const savedUser = localStorage.getItem('janova-user');
     if (savedUser) {
