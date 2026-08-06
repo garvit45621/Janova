@@ -14,7 +14,7 @@ export default function LandingView() {
   
   // Google OAuth Modal States
   const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('garvit.sarna2001@gmail.com');
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
   const [isLoggingInGoogle, setIsLoggingInGoogle] = useState(false);
 
   // OTP Verification States
@@ -186,7 +186,11 @@ export default function LandingView() {
   };
 
   const handleGoogleSignIn = async (selectedEmail?: string) => {
-    const emailToUse = selectedEmail || customGoogleEmail || 'garvit.sarna2001@gmail.com';
+    const emailToUse = selectedEmail || customGoogleEmail;
+    if (!emailToUse) {
+      setError('Please enter your Google email address.');
+      return;
+    }
     setIsLoggingInGoogle(true);
     setError('');
 
