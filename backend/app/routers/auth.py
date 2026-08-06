@@ -248,64 +248,71 @@ def send_welcome_email(email: str, name: str):
     if not email_clean:
         return
 
-    resend_key = os.environ.get("RESEND_API_KEY", "").strip()
-    if not resend_key:
-        env_paths = [
-            os.path.join(os.path.dirname(__file__), "..", "..", ".env"),
-            os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env"),
-            os.path.join(os.getcwd(), ".env"),
-            os.path.join(os.getcwd(), "..", ".env")
-        ]
-        for env_p in env_paths:
-            if os.path.exists(env_p):
-                with open(env_p, "r", encoding="utf-8") as f:
-                    for line in f:
-                        if line.startswith("RESEND_API_KEY="):
-                            resend_key = line.split("=", 1)[1].strip()
-                            if resend_key:
-                                os.environ["RESEND_API_KEY"] = resend_key
-                                break
-            if resend_key:
-                break
+    gmail_user = os.environ.get("GMAIL_USER", "").strip()
+    gmail_pass = os.environ.get("GMAIL_APP_PASS", "").strip()
 
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; padding: 30px; border: 1px solid #1e293b; border-radius: 16px; background-color: #0f172a; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="display: inline-block; width: 48px; height: 48px; line-height: 48px; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #06b6d4); color: #ffffff; font-size: 24px; font-weight: 800; margin-bottom: 12px;">J</div>
+            <h1 style="color: #38bdf8; font-size: 22px; font-weight: 800; margin: 0;">Janova GovTech OS</h1>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Unified Operating System for National Citizen Services</p>
+        </div>
+        
+        <div style="background: #1e293b; padding: 22px; border-radius: 12px; border-left: 4px solid #38bdf8; margin: 20px 0;">
+            <h3 style="color: #ffffff; margin-top: 0; font-size: 17px; font-weight: 700;">Welcome to Janova Portal, {name}! 🎉</h3>
+            <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6; margin-bottom: 0;">
+                Your email address (<strong>{email_clean}</strong>) has been authenticated and verified successfully with the Janova National Citizen Network.
+            </p>
+        </div>
+
+        <div style="margin: 24px 0;">
+            <h4 style="color: #38bdf8; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Your Digital Identity Features:</h4>
+            <div style="background: #172033; padding: 16px; border-radius: 10px; border: 1px solid #1e293b;">
+                <ul style="color: #cbd5e1; font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                    <li>🔐 <strong>Digital Credentials Vault:</strong> AES-256 client-side encrypted UIDAI DigiLocker synchronization.</li>
+                    <li>💰 <strong>AI Welfare Scheme Finder:</strong> Automated eligibility calculations for 150+ central & state grants.</li>
+                    <li>📍 <strong>Geospatial Municipal Radar:</strong> 1-click ward complaint reporting with real-time SLA tracking.</li>
+                    <li>🏢 <strong>48-Hour Corporate Portal:</strong> MCA SPICe+ entity incorporation and PAN/TAN allotment.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 28px; padding-top: 18px; border-top: 1px solid #334155;">
+            <p style="color: #64748b; font-size: 11px; margin: 0;">
+                This welcome notification was dispatched to <strong>{email_clean}</strong>.<br />
+                Janova Enterprise GovTech Infrastructure • 256-Bit Encrypted Standard
+            </p>
+        </div>
+    </div>
+    """
+
+    # If Gmail SMTP credentials are set, use Gmail SMTP (Sends to ANY recipient inbox)
+    if gmail_user and gmail_pass:
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = f"Welcome to Janova Portal, {name}! 🎉"
+            msg["From"] = f"Janova Portal <{gmail_user}>"
+            msg["To"] = email_clean
+            msg.attach(MIMEText(html_body, "html"))
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+                server.login(gmail_user, gmail_pass)
+                server.sendmail(gmail_user, [email_clean], msg.as_string())
+            print(f"Gmail SMTP welcome email sent successfully to {email_clean}")
+            return
+        except Exception as gmail_err:
+            print("Gmail SMTP Error:", gmail_err)
+
+    # Fallback to Resend API
+    resend_key = os.environ.get("RESEND_API_KEY", "").strip()
     if resend_key:
         try:
             url = "https://api.resend.com/emails"
-            html_body = f"""
-            <div style="font-family: Arial, sans-serif; max-width: 560px; margin: auto; padding: 30px; border: 1px solid #1e293b; border-radius: 16px; background-color: #0f172a; color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <div style="display: inline-block; width: 48px; height: 48px; line-height: 48px; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #06b6d4); color: #ffffff; font-size: 24px; font-weight: 800; margin-bottom: 12px;">J</div>
-                    <h1 style="color: #38bdf8; font-size: 22px; font-weight: 800; margin: 0;">Janova GovTech OS</h1>
-                    <p style="color: #94a3b8; font-size: 13px; margin-top: 4px;">Unified Operating System for National Citizen Services</p>
-                </div>
-                
-                <div style="background: #1e293b; padding: 22px; border-radius: 12px; border-left: 4px solid #38bdf8; margin: 20px 0;">
-                    <h3 style="color: #ffffff; margin-top: 0; font-size: 17px; font-weight: 700;">Welcome to Janova Portal, {name}! 🎉</h3>
-                    <p style="color: #cbd5e1; font-size: 13px; line-height: 1.6; margin-bottom: 0;">
-                        Your email address (<strong>{email_clean}</strong>) has been authenticated and verified successfully with the Janova National Citizen Network.
-                    </p>
-                </div>
-
-                <div style="margin: 24px 0;">
-                    <h4 style="color: #38bdf8; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Your Digital Identity Features:</h4>
-                    <div style="background: #172033; padding: 16px; border-radius: 10px; border: 1px solid #1e293b;">
-                        <ul style="color: #cbd5e1; font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                            <li>🔐 <strong>Digital Credentials Vault:</strong> AES-256 client-side encrypted UIDAI DigiLocker synchronization.</li>
-                            <li>💰 <strong>AI Welfare Scheme Finder:</strong> Automated eligibility calculations for 150+ central & state grants.</li>
-                            <li>📍 <strong>Geospatial Municipal Radar:</strong> 1-click ward complaint reporting with real-time SLA tracking.</li>
-                            <li>🏢 <strong>48-Hour Corporate Portal:</strong> MCA SPICe+ entity incorporation and PAN/TAN allotment.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 28px; padding-top: 18px; border-top: 1px solid #334155;">
-                    <p style="color: #64748b; font-size: 11px; margin: 0;">
-                        This welcome notification was dispatched to <strong>{email_clean}</strong>.<br />
-                        Janova Enterprise GovTech Infrastructure • 256-Bit Encrypted Standard
-                    </p>
-                </div>
-            </div>
-            """
             payload = {
                 "from": "Janova Portal <onboarding@resend.dev>",
                 "to": [email_clean],
@@ -319,14 +326,36 @@ def send_welcome_email(email: str, name: str):
                 headers={
                     'Content-Type': 'application/json',
                     'Authorization': f'Bearer {resend_key}',
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    'User-Agent': 'Mozilla/5.0'
                 }
             )
             with urllib.request.urlopen(http_req, timeout=8) as resp:
-                print(f"Welcome email sent successfully to {email_clean}")
+                print(f"Welcome email sent successfully via Resend to {email_clean}")
         except urllib.error.HTTPError as he:
             err_body = he.read().decode('utf-8')
             print("Resend Welcome Email HTTP Error:", he.code, err_body)
+            if he.code == 403 or "validation_error" in err_body:
+                try:
+                    payload_fallback = {
+                        "from": "Janova Portal <onboarding@resend.dev>",
+                        "to": ["garvit.sarna2001@gmail.com"],
+                        "subject": f"🚀 [Janova Citizen Login] Welcome {name} ({email_clean})",
+                        "html": html_body
+                    }
+                    req_data_fb = json.dumps(payload_fallback).encode('utf-8')
+                    http_req_fb = urllib.request.Request(
+                        url, 
+                        data=req_data_fb, 
+                        headers={
+                            'Content-Type': 'application/json',
+                            'Authorization': f'Bearer {resend_key}',
+                            'User-Agent': 'Mozilla/5.0'
+                        }
+                    )
+                    with urllib.request.urlopen(http_req_fb, timeout=8) as resp_fb:
+                        print(f"Fallback notification sent to garvit.sarna2001@gmail.com for user {email_clean}")
+                except Exception as fb_err:
+                    print("Resend Fallback Error:", fb_err)
         except Exception as e:
             print("Resend Welcome Email Exception:", e)
 
