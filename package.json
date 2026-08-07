@@ -4,6 +4,7 @@
   "description": "Workspace root for Janova GovTech system",
   "private": true,
   "scripts": {
+    "build": "npm run build --prefix frontend",
     "dev": "npm run dev:backend & npm run dev:frontend",
     "dev:frontend": "npm run dev --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
