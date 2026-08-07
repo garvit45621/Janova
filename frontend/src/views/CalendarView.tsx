@@ -8,21 +8,52 @@ export default function CalendarView() {
   if (!context) return null;
   const { user, deadlines, createPersonalDeadline } = context;
 
+  // Default automatically to current month and year
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [newEventTitle, setNewEventTitle] = useState('');
   const [newEventType, setNewEventType] = useState('personal');
   const [newEventUrgency, setNewEventUrgency] = useState('medium');
   const [error, setError] = useState('');
 
-  // Setup May 2026
-  // May 1st, 2026 is a Friday (index 5)
-  const emptyDaysBefore = 5;
-  const daysInMonth = 31;
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth(); // 0-indexed
+  const monthName = currentDate.toLocaleString('default', { month: 'long' });
+
+  // First day of month (0 = Sun, 1 = Mon, ..., 6 = Sat)
+  const emptyDaysBefore = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Identify today
+  const realToday = new Date();
+  const isCurrentMonthView = realToday.getFullYear() === year && realToday.getMonth() === month;
+  const todayDayNumber = isCurrentMonthView ? realToday.getDate() : null;
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
+    setSelectedDay(null);
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+    setSelectedDay(null);
+  };
+
+  const handleToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDay(null);
+  };
+
+  const formatDateString = (day: number) => {
+    const m = String(month + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    return `${year}-${m}-${d}`;
+  };
+
   const getEventsForDay = (day: number) => {
-    const dateString = `2026-05-${day.toString().padStart(2, '0')}`;
+    const dateString = formatDateString(day);
     return deadlines.filter(d => d.date === dateString);
   };
 
@@ -34,12 +65,12 @@ export default function CalendarView() {
 
   const handleAddEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEventTitle.trim() || !user) {
+    if (!newEventTitle.trim() || !user || !selectedDay) {
       setError('Please enter reminder details.');
       return;
     }
 
-    const dateString = `2026-05-${selectedDay?.toString().padStart(2, '0')}`;
+    const dateString = formatDateString(selectedDay);
     await createPersonalDeadline(newEventTitle, dateString, newEventType, newEventUrgency);
     setSelectedDay(null);
   };
@@ -49,10 +80,36 @@ export default function CalendarView() {
       <div className="glass-card p-5 flex flex-col gap-5">
         
         {/* Calendar Header */}
-        <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-4">
-          <div className="flex flex-col">
-            <h2 className="text-xl font-bold tracking-tight">May 2026</h2>
-            <span className="text-xs text-[#94A3B8] font-medium uppercase mt-0.5">Municipal & Personal Scheduling Board</span>
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-4">
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col">
+              <h2 className="text-xl font-bold tracking-tight">{monthName} {year}</h2>
+              <span className="text-xs text-[#94A3B8] font-medium uppercase mt-0.5">Municipal & Personal Scheduling Board</span>
+            </div>
+
+            {/* Navigation Controls */}
+            <div className="flex items-center gap-1.5 ml-2">
+              <button 
+                onClick={handlePrevMonth}
+                className="p-1.5 rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors text-xs font-semibold"
+                title="Previous Month"
+              >
+                ◀
+              </button>
+              <button 
+                onClick={handleToday}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+              >
+                Today
+              </button>
+              <button 
+                onClick={handleNextMonth}
+                className="p-1.5 rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition-colors text-xs font-semibold"
+                title="Next Month"
+              >
+                ▶
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-3 text-[9px] font-bold flex-wrap">
@@ -69,7 +126,7 @@ export default function CalendarView() {
 
         {/* Days grid */}
         <div className="grid grid-cols-7 gap-2.5">
-          {/* Empty cells before Friday */}
+          {/* Empty cells before month start */}
           {Array.from({ length: emptyDaysBefore }).map((_, i) => (
             <div key={`empty-${i}`} className="min-h-[85px] p-2 bg-[#F8FAFC]/40 dark:bg-[#172033]/20 rounded-xl border border-transparent" />
           ))}
@@ -77,13 +134,29 @@ export default function CalendarView() {
           {/* Actual days */}
           {daysArray.map((day) => {
             const dayEvents = getEventsForDay(day);
+            const isToday = day === todayDayNumber;
             return (
               <div 
                 key={day}
                 onClick={() => handleDayClick(day)}
-                className="min-h-[85px] p-2 bg-white dark:bg-[#0F1626] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl flex flex-col justify-between hover:border-blue-500 cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-md"
+                className={`min-h-[85px] p-2 bg-white dark:bg-[#0F1626] border rounded-xl flex flex-col justify-between hover:border-blue-500 cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-md ${
+                  isToday 
+                    ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/20 dark:bg-blue-950/20' 
+                    : 'border-[#E2E8F0] dark:border-[#1E293B]'
+                }`}
               >
-                <span className="text-xs font-bold text-[#475569] dark:text-[#94A3B8]">{day}</span>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold ${
+                    isToday 
+                      ? 'bg-blue-600 text-white h-5 w-5 rounded-full flex items-center justify-center' 
+                      : 'text-[#475569] dark:text-[#94A3B8]'
+                  }`}>
+                    {day}
+                  </span>
+                  {isToday && (
+                    <span className="text-[9px] font-extrabold text-blue-500 uppercase tracking-tighter">Today</span>
+                  )}
+                </div>
                 
                 {/* Event stack */}
                 <div className="flex flex-col gap-1 mt-1.5">
@@ -117,7 +190,7 @@ export default function CalendarView() {
           
           <div className="glass rounded-2xl w-full max-w-sm shadow-2xl p-6 relative border border-[#E2E8F0]/30 dark:border-[#1E293B]/40 z-10 animate-scale-in flex flex-col gap-5">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
-              <h3 className="font-heading text-sm font-bold">Schedule Reminder: May {selectedDay}, 2026</h3>
+              <h3 className="font-heading text-sm font-bold">Schedule Reminder: {monthName} {selectedDay}, {year}</h3>
               <button onClick={() => setSelectedDay(null)}>✕</button>
             </div>
 
@@ -176,3 +249,4 @@ export default function CalendarView() {
     </div>
   );
 }
+
