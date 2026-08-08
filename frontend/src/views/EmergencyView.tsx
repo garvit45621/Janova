@@ -53,14 +53,120 @@ const DEFAULT_ALERTS: EmergencyAlert[] = [
   }
 ];
 
+const DEFAULT_HELPLINES: EmergencyHelpline[] = [
+  {
+    id: 1,
+    name: "National Emergency SOS Unified Line",
+    number: "112",
+    category: "Emergency",
+    description: "24/7 Police, Fire, Ambulance & Emergency Dispatch",
+    icon: "🚨"
+  },
+  {
+    id: 2,
+    name: "24/7 Municipal Toll-Free Control Room",
+    number: "1916",
+    category: "Municipal",
+    description: "24/7 Civic Complaints, Flooding & Fallen Trees",
+    icon: "🏢"
+  },
+  {
+    id: 3,
+    name: "National Disaster Response Force (NDRF)",
+    number: "1078",
+    category: "Disaster",
+    description: "24/7 Cyclone, Flood & Evacuation Rescue",
+    icon: "🌊"
+  },
+  {
+    id: 4,
+    name: "District Police Control Room",
+    number: "100",
+    category: "Police",
+    description: "Law enforcement & emergency assistance",
+    icon: "🚓"
+  },
+  {
+    id: 5,
+    name: "Fire Emergency & Rescue Service",
+    number: "101",
+    category: "Fire",
+    description: "24/7 Fire tender dispatch & hazard response",
+    icon: "🚒"
+  },
+  {
+    id: 6,
+    name: "Medical Emergency Ambulance",
+    number: "108",
+    category: "Medical",
+    description: "24/7 Advanced Life Support Ambulance",
+    icon: "🚑"
+  },
+  {
+    id: 7,
+    name: "Women Safety Emergency Helpline",
+    number: "1091",
+    category: "Safety",
+    description: "24/7 Special police distress response",
+    icon: "🛡️"
+  },
+  {
+    id: 8,
+    name: "Senior Citizen Assistance Line",
+    number: "14567",
+    category: "Senior",
+    description: "Elder assistance & emergency care line",
+    icon: "👴"
+  }
+];
+
+const DEFAULT_SHELTERS: ShelterLocation[] = [
+  {
+    id: 1,
+    name: "Central Community Relief Center & Indoor Stadium",
+    address: "Block B, Stadium Complex, Central Sector",
+    x_coord: 250,
+    y_coord: 150,
+    capacity: 500,
+    occupancy: 180,
+    status: "open",
+    amenities: ["Emergency Food & Water", "Medical Bay", "Power Backups", "Sanitation Facilities"],
+    contact_phone: "+91 80 2294 1100"
+  },
+  {
+    id: 2,
+    name: "Government High School Emergency Flood Shelter",
+    address: "Main Road, North Ward 12",
+    x_coord: 280,
+    y_coord: 180,
+    capacity: 250,
+    occupancy: 95,
+    status: "open",
+    amenities: ["Dry Rations", "First Aid Kit", "Child Care Space"],
+    contact_phone: "+91 80 2294 2200"
+  },
+  {
+    id: 3,
+    name: "Red Cross Disaster Evacuation Camp",
+    address: "Community Hall Grounds, East Zone",
+    x_coord: 210,
+    y_coord: 130,
+    capacity: 400,
+    occupancy: 390,
+    status: "full",
+    amenities: ["Doctor on Duty", "Clean Drinking Water", "Blankets & Cots"],
+    contact_phone: "+91 80 2294 3300"
+  }
+];
+
 export default function EmergencyView() {
   const context = useContext(AppContext);
   if (!context) return null;
   const { user, reloadUserData } = context;
 
   const [alerts, setAlerts] = useState<EmergencyAlert[]>(DEFAULT_ALERTS);
-  const [helplines, setHelplines] = useState<EmergencyHelpline[]>([]);
-  const [shelters, setShelters] = useState<ShelterLocation[]>([]);
+  const [helplines, setHelplines] = useState<EmergencyHelpline[]>(DEFAULT_HELPLINES);
+  const [shelters, setShelters] = useState<ShelterLocation[]>(DEFAULT_SHELTERS);
   const [activeSeverity, setActiveSeverity] = useState('All');
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
 
@@ -120,11 +226,20 @@ export default function EmergencyView() {
         fetch(`${API_BASE_URL}/api/emergency/shelters`)
       ]);
 
-      if (resAlt.ok) setAlerts(await resAlt.json());
-      if (resHlp.ok) setHelplines(await resHlp.json());
-      if (resShl.ok) setShelters(await resShl.json());
+      if (resAlt.ok) {
+        const data = await resAlt.json();
+        if (Array.isArray(data) && data.length > 0) setAlerts(data);
+      }
+      if (resHlp.ok) {
+        const data = await resHlp.json();
+        if (Array.isArray(data) && data.length > 0) setHelplines(data);
+      }
+      if (resShl.ok) {
+        const data = await resShl.json();
+        if (Array.isArray(data) && data.length > 0) setShelters(data);
+      }
     } catch (e) {
-      console.error('Failed to fetch emergency data', e);
+      console.warn('API connection offline, using default emergency helplines and shelters.', e);
     }
   };
 
