@@ -589,6 +589,60 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       services_needed: ["Digital Death Certificate Service", "Legal Heir / Succession Certificate Service", "Insurance & EPF Family Pension Claims"],
       documents_required: ["Medical Attendant Death Summary", "Deceased Aadhaar & PAN Card", "Applicant Relationship Proof & Ration Card"],
       timeline_est: "3-10 Days"
+    },
+    {
+      id: 9,
+      name: "Address Change / Relocation",
+      description: "Complete roadmap for updating address across national identity documents, electoral rolls, utility connections, and bank records when shifting residence.",
+      required_registrations: ["UIDAI Aadhaar Online Address Update", "Voter ID Electoral Roll Transfer (Form 8)", "Ration Card Ward Shift"],
+      services_needed: ["Aadhaar Address Update Service", "Voter EPIC Address Correction", "LPG Gas Connection Transfer Service"],
+      documents_required: ["Registered Rent Agreement / Property Sale Deed", "Latest Electricity Bill", "Bank Passbook with New Address"],
+      timeline_est: "3-7 Days"
+    },
+    {
+      id: 10,
+      name: "Medical Care & Hospitalization",
+      description: "Navigating cashless hospitalization, Ayushman Bharat PM-JAY claims, ABHA digital health account record creation, and emergency medical concessions.",
+      required_registrations: ["ABHA 14-Digit Health Account Creation", "Ayushman Bharat Golden Card e-KYC Verification"],
+      services_needed: ["Ayushman Bharat Cashless Pre-Authorization", "ABHA Prescriptions & Scan Linkage", "Emergency Medical Subsidy Claim"],
+      documents_required: ["Aadhaar Card", "Ration Card", "Hospital Discharge Summary & Doctor Test Reports"],
+      timeline_est: "Instant (1 Day)"
+    },
+    {
+      id: 11,
+      name: "Vehicle Purchase",
+      description: "Step-by-step registration for new or second-hand vehicle, HSRP high security number plate booking, motor insurance, and RTO RC transfer.",
+      required_registrations: ["Parivahan Vahan Vehicle RC Registration", "HSRP High Security License Plate Booking"],
+      services_needed: ["Parivahan Vehicle Ownership Transfer", "Comprehensive Motor Insurance Linkage", "Pollution Under Control (PUC) Certificate"],
+      documents_required: ["Form 29 & 30 for RC Transfer", "Aadhaar Card & PAN Card", "Vehicle Fitness Certificate & Insurance Policy"],
+      timeline_est: "7-14 Days"
+    },
+    {
+      id: 12,
+      name: "Higher Education & Exams",
+      description: "Guide for competitive national exam applications (JEE/NEET/CUET/UPSC), hall ticket download, rank counseling, and fee concession certificates.",
+      required_registrations: ["NTA Single Sign-On Exam Registration", "State Higher Education Counseling Registration"],
+      services_needed: ["E-District Caste & Domicile Verification", "National Scholarship Portal Fee Exemption", "Digital Degree Verification"],
+      documents_required: ["10th & 12th Board Marksheets", "Caste / EWS Certificate", "Aadhaar Card & Passport Photographs"],
+      timeline_est: "10-20 Days"
+    },
+    {
+      id: 13,
+      name: "Senior Citizen Transition",
+      description: "Comprehensive roadmap for citizens turning 60, applying for Senior Citizen ID Card, travel concessions, NPS annuity setup, and 70+ Ayushman health insurance.",
+      required_registrations: ["Senior Citizen Municipal Identity Card", "Digital Life Certificate (Jeevan Pramaan) Face Auth"],
+      services_needed: ["Ayushman Bharat Senior 70+ Health Card", "Railway & State Bus Concession Card", "NPS Pension Annuity Settlement"],
+      documents_required: ["Aadhaar Card (Proof of Age 60+)", "PAN Card", "Bank Account Details with Nominee"],
+      timeline_est: "5-10 Days"
+    },
+    {
+      id: 14,
+      name: "Disability & Accessibility",
+      description: "End-to-end guide for securing Unique Disability ID (UDID) card, accessing government travel concessions, assistive device grants, and disability pensions.",
+      required_registrations: ["Swavlamban UDID Portal Application", "District Hospital Medical Board Assessment"],
+      services_needed: ["UDID National Disability Card Service", "State Disability Financial Assistance Pension", "Free Transport Pass Service"],
+      documents_required: ["Medical Disability Certificate (40%+ Benchmark)", "Aadhaar Card", "Passport Photographs"],
+      timeline_est: "14-30 Days"
     }
   ]);
 
@@ -664,28 +718,59 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const reloadUserData = async () => {
     if (!user) return;
+
+    // First load from local storage fallback so offline/re-login works instantly
     try {
-      // Fetch Documents
+      const savedDocs = localStorage.getItem(`janova-documents-${user.id}`);
+      if (savedDocs) setDocuments(JSON.parse(savedDocs));
+
+      const savedApps = localStorage.getItem(`janova-applications-${user.id}`);
+      if (savedApps) setApplications(JSON.parse(savedApps));
+
+      const savedDls = localStorage.getItem(`janova-deadlines-${user.id}`);
+      if (savedDls) setDeadlines(JSON.parse(savedDls));
+
+      const savedCmps = localStorage.getItem('janova-complaints');
+      if (savedCmps) setComplaints(JSON.parse(savedCmps));
+    } catch (e) {
+      console.warn("Error loading local storage cache:", e);
+    }
+
+    try {
+      // Fetch Documents from backend if connected
       const resDoc = await fetch(`${API_BASE_URL}/api/vault/${user.id}`);
       if (resDoc.ok) {
         const data = await resDoc.json();
-        setDocuments(data.documents || []);
+        const docs = data.documents || [];
+        setDocuments(docs);
+        localStorage.setItem(`janova-documents-${user.id}`, JSON.stringify(docs));
       }
 
       // Fetch Applications
       const resApp = await fetch(`${API_BASE_URL}/api/services/applications/${user.id}`);
-      if (resApp.ok) setApplications(await resApp.json());
+      if (resApp.ok) {
+        const apps = await resApp.json();
+        setApplications(apps);
+        localStorage.setItem(`janova-applications-${user.id}`, JSON.stringify(apps));
+      }
 
       // Fetch Deadlines
       const resDl = await fetch(`${API_BASE_URL}/api/calendar/${user.id}`);
-      if (resDl.ok) setDeadlines(await resDl.json());
+      if (resDl.ok) {
+        const dls = await resDl.json();
+        setDeadlines(dls);
+        localStorage.setItem(`janova-deadlines-${user.id}`, JSON.stringify(dls));
+      }
 
       // Reload complaints
       const resCmp = await fetch(`${API_BASE_URL}/api/complaints/list`);
-      if (resCmp.ok) setComplaints(await resCmp.json());
-
+      if (resCmp.ok) {
+        const cmps = await resCmp.json();
+        setComplaints(cmps);
+        localStorage.setItem('janova-complaints', JSON.stringify(cmps));
+      }
     } catch (e) {
-      console.error("Error reloading citizen details", e);
+      console.warn("API offline, using local cached citizen records.", e);
     }
   };
 
@@ -778,11 +863,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       twoFactorEnabled: true
     };
     
-    // Immediately log in user on frontend so UI is smooth & responsive
     setUser(userObj);
     localStorage.setItem('janova-user', JSON.stringify(userObj));
 
-    // Dispatch background request to backend to send real Welcome Email via Gmail SMTP
     try {
       fetch(`${API_BASE_URL}/api/auth/google`, {
         method: 'POST',
@@ -873,6 +956,25 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const submitServiceApplication = async (title: string, category: string) => {
     if (!user) return;
+    const newApp: Application = {
+      id: Date.now(),
+      user_id: user.id,
+      title,
+      category,
+      status: 'pending',
+      progress: 25,
+      created_at: new Date().toISOString(),
+      history: [
+        { status: 'Submitted', date: new Date().toLocaleDateString(), desc: 'Application received and logged for municipal processing.' }
+      ]
+    };
+
+    setApplications(prev => {
+      const updated = [newApp, ...prev];
+      localStorage.setItem(`janova-applications-${user.id}`, JSON.stringify(updated));
+      return updated;
+    });
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/services/apply`, {
         method: 'POST',
@@ -883,12 +985,29 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await reloadUserData();
       }
     } catch (e) {
-      console.error("Apply request failed", e);
+      console.warn("Apply request network fallback saved locally.", e);
     }
   };
 
   const uploadFile = async (name: string, category: string, size: string, fileObj?: File) => {
     if (!user) return;
+    const newDoc: Document = {
+      id: Date.now(),
+      user_id: user.id,
+      name,
+      category: category as any,
+      size,
+      url: '#',
+      verified: true,
+      upload_date: new Date().toISOString().split('T')[0]
+    };
+
+    setDocuments(prev => {
+      const updated = [newDoc, ...prev];
+      localStorage.setItem(`janova-documents-${user.id}`, JSON.stringify(updated));
+      return updated;
+    });
+
     try {
       const body = new FormData();
       body.append('user_id', user.id.toString());
@@ -907,11 +1026,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await reloadUserData();
       }
     } catch (e) {
-      console.error("Upload file failed", e);
+      console.warn("Upload file saved to local citizen vault.", e);
     }
   };
 
   const removeFile = async (id: number) => {
+    if (!user) return;
+    setDocuments(prev => {
+      const updated = prev.filter(d => d.id !== id);
+      localStorage.setItem(`janova-documents-${user.id}`, JSON.stringify(updated));
+      return updated;
+    });
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/vault/delete/${id}`, {
         method: 'DELETE'
@@ -920,12 +1046,32 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await reloadUserData();
       }
     } catch (e) {
-      console.error("Delete file failed", e);
+      console.warn("Delete file fallback executed.", e);
     }
   };
 
   const submitCivicComplaint = async (title: string, category: string, description: string, location: string, x: number, y: number) => {
     if (!user) return;
+    const newCmp: Complaint = {
+      id: Date.now(),
+      user_id: user.id,
+      title,
+      category: category as any,
+      description,
+      location,
+      x_coord: x,
+      y_coord: y,
+      status: 'new',
+      upvotes: 1,
+      created_at: new Date().toISOString()
+    };
+
+    setComplaints(prev => {
+      const updated = [newCmp, ...prev];
+      localStorage.setItem('janova-complaints', JSON.stringify(updated));
+      return updated;
+    });
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/complaints/create`, {
         method: 'POST',
@@ -936,11 +1082,17 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await reloadUserData();
       }
     } catch (e) {
-      console.error("Submit complaint failed", e);
+      console.warn("Submit complaint saved to local complaints registry.", e);
     }
   };
 
   const upvoteCivicComplaint = async (id: number) => {
+    setComplaints(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, upvotes: c.upvotes + 1 } : c);
+      localStorage.setItem('janova-complaints', JSON.stringify(updated));
+      return updated;
+    });
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/complaints/upvote/${id}`, {
         method: 'POST'
@@ -949,12 +1101,27 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await reloadUserData();
       }
     } catch (e) {
-      console.error("Upvote failed", e);
+      console.warn("Upvote saved locally.", e);
     }
   };
 
   const createPersonalDeadline = async (title: string, date: string, type: string, urgency: string) => {
     if (!user) return;
+    const newDl: Deadline = {
+      id: Date.now(),
+      user_id: user.id,
+      title,
+      date,
+      type: type as any,
+      urgency: urgency as any
+    };
+
+    setDeadlines(prev => {
+      const updated = [newDl, ...prev];
+      localStorage.setItem(`janova-deadlines-${user.id}`, JSON.stringify(updated));
+      return updated;
+    });
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/calendar/create`, {
         method: 'POST',
@@ -965,17 +1132,27 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         await reloadUserData();
       }
     } catch (e) {
-      console.error("Create deadline failed", e);
+      console.warn("Create deadline saved locally.", e);
     }
   };
 
   const updateNotificationStatus = () => {
-    // Marks all as read simple trigger
     setNotifications(prev => prev.map(n => ({ ...n, read_status: true })));
   };
 
   const updateUserProfile = async (name: string, phone: string, address: string, prefs: any, twoFactor: boolean) => {
     if (!user) return;
+    const updatedUser = {
+      ...user,
+      name,
+      phone,
+      address,
+      notificationPreferences: prefs,
+      twoFactorEnabled: twoFactor
+    };
+    setUser(updatedUser);
+    localStorage.setItem('janova-user', JSON.stringify(updatedUser));
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/profile/${user.id}`, {
         method: 'PUT',
@@ -984,7 +1161,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        const updatedUser = {
+        const finalUser = {
           ...user,
           name: data.profile.name,
           phone: data.profile.phone,
@@ -992,11 +1169,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
           notificationPreferences: data.profile.notificationPreferences,
           twoFactorEnabled: data.profile.twoFactorEnabled
         };
-        setUser(updatedUser);
-        localStorage.setItem('janova-user', JSON.stringify(updatedUser));
+        setUser(finalUser);
+        localStorage.setItem('janova-user', JSON.stringify(finalUser));
       }
     } catch (e) {
-      console.error("Profile update failed", e);
+      console.warn("Profile updated in local storage.", e);
     }
   };
 

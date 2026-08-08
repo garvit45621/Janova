@@ -5,6 +5,24 @@ import { AppContext } from '../context/AppContext';
 import { LifeEvent } from '../types';
 import { API_BASE_URL } from '../config/api';
 
+const getLifeEventIcon = (name: string) => {
+  if (name.includes('Birth')) return '👶';
+  if (name.includes('Marriage')) return '💍';
+  if (name.includes('College') || name.includes('Admission')) return '🎓';
+  if (name.includes('Employment') || name.includes('Job')) return '💼';
+  if (name.includes('Business')) return '🏢';
+  if (name.includes('Property')) return '🏡';
+  if (name.includes('Retirement')) return '👴';
+  if (name.includes('Death')) return '🕊️';
+  if (name.includes('Address') || name.includes('Relocation')) return '📍';
+  if (name.includes('Medical') || name.includes('Hospital')) return '🏥';
+  if (name.includes('Vehicle')) return '🚘';
+  if (name.includes('Exams') || name.includes('Education')) return '📚';
+  if (name.includes('Senior')) return '🧓';
+  if (name.includes('Disability')) return '♿';
+  return '🗺️';
+};
+
 export default function LifeEventsView() {
   const context = useContext(AppContext);
   if (!context) return null;
@@ -12,6 +30,7 @@ export default function LifeEventsView() {
 
   const [activeEvent, setActiveEvent] = useState<LifeEvent | null>(null);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (lifeEvents.length > 0 && !activeEvent) {
@@ -72,6 +91,11 @@ export default function LifeEventsView() {
     return Math.round((checked / total) * 100);
   };
 
+  const filteredEvents = lifeEvents.filter(ev => 
+    ev.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    ev.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full animate-scale-in text-left">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -79,9 +103,21 @@ export default function LifeEventsView() {
         {/* Left Side: Life Events selector grid (Col: 4) */}
         <div className="lg:col-span-4 flex flex-col gap-4">
           <div className="glass-card p-5 flex flex-col gap-4">
-            <h3 className="font-heading text-sm font-bold border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">Life Event Roadmaps</h3>
-            <div className="flex flex-col gap-2.5 max-h-[400px] overflow-y-auto pr-1">
-              {lifeEvents.map((ev) => (
+            <div className="flex justify-between items-center border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+              <h3 className="font-heading text-sm font-bold">Life Event Roadmaps</h3>
+              <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md">{lifeEvents.length} Guides</span>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search life events (e.g. Address, Vehicle)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-3 py-1.5 text-xs rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#0F1626] focus:outline-none w-full"
+            />
+
+            <div className="flex flex-col gap-2.5 max-h-[480px] overflow-y-auto pr-1">
+              {filteredEvents.map((ev) => (
                 <button
                   key={ev.id}
                   onClick={() => setActiveEvent(ev)}
@@ -91,7 +127,10 @@ export default function LifeEventsView() {
                       : 'border-[#E2E8F0] dark:border-[#1E293B] hover:bg-slate-50 dark:hover:bg-[#172033]'
                   }`}
                 >
-                  <span className="text-xs font-bold">{ev.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{getLifeEventIcon(ev.name)}</span>
+                    <span className="text-xs font-bold">{ev.name}</span>
+                  </div>
                   <span className="text-[10px] text-[#94A3B8] leading-normal mt-1 line-clamp-2">{ev.description}</span>
                 </button>
               ))}

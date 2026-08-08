@@ -115,7 +115,7 @@ export interface BusinessTemplate {
 
 export interface LifeEvent {
   id: number;
-  name: 'Birth of Child' | 'Marriage' | 'College Admission' | 'Employment' | 'Starting Business' | 'Property Purchase' | 'Retirement' | 'Death in Family';
+  name: 'Birth of Child' | 'Marriage' | 'College Admission' | 'Employment' | 'Starting Business' | 'Property Purchase' | 'Retirement' | 'Death in Family' | 'Address Change / Relocation' | 'Medical Care & Hospitalization' | 'Vehicle Purchase' | 'Higher Education & Exams' | 'Senior Citizen Transition' | 'Disability & Accessibility';
   description: string;
   required_registrations: string[];
   services_needed: string[];
