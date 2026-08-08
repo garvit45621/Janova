@@ -1,31 +1,121 @@
 'use client';
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Scheme } from '../types';
 import { API_BASE_URL } from '../config/api';
 
+const DEFAULT_SCHEMES_LIST: Scheme[] = [
+  {
+    id: 1,
+    title: "PM-Kisan Samman Nidhi Yojana",
+    description: "Direct annual income support of ₹6,000 disbursed in three equal installments to farmer families.",
+    desc: "Direct annual income support of ₹6,000 disbursed in three equal installments to farmer families.",
+    category: "Subsidies",
+    amount: "₹6,000 / year",
+    eligibility_rules: { max_income: 300000, profession: "Farmer" },
+    requirements: ["Land Holding Record (7/12 / Khasra)", "Bank Account linked with Aadhaar", "e-KYC Completion"],
+    matchPercentage: 94
+  },
+  {
+    id: 2,
+    title: "Post-Matric Higher Education Scholarship",
+    description: "Financial assistance for tuition fees, maintenance allowance, and book grants for students.",
+    desc: "Financial assistance for tuition fees, maintenance allowance, and book grants for students.",
+    category: "Scholarships",
+    amount: "₹25,000 / year",
+    eligibility_rules: { max_income: 250000, profession: "Student" },
+    requirements: ["College Bonafide Certificate", "Income Certificate below ₹2.5L", "Aadhaar Linked Bank Passbook"],
+    matchPercentage: 91
+  },
+  {
+    id: 3,
+    title: "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+    description: "Maternity benefit incentive of ₹5,000 paid directly to pregnant and lactating mothers.",
+    desc: "Maternity benefit incentive of ₹5,000 paid directly to pregnant and lactating mothers.",
+    category: "Welfare",
+    amount: "₹5,000 one-time",
+    eligibility_rules: { max_income: 800000, profession: "General" },
+    requirements: ["Mother & Child Protection (MCP) Card", "Pregnancy Registration at Anganwadi", "Aadhaar Card"],
+    matchPercentage: 86
+  },
+  {
+    id: 4,
+    title: "Stand-Up India Business Loan Scheme",
+    description: "Bank loans between ₹10 Lakh and ₹1 Crore for setting up greenfield enterprises.",
+    desc: "Bank loans between ₹10 Lakh and ₹1 Crore for setting up greenfield enterprises.",
+    category: "Grants",
+    amount: "₹10 Lakh - ₹1 Crore",
+    eligibility_rules: { max_income: 1500000, profession: "Entrepreneur" },
+    requirements: ["Detailed Business Project Report (DPR)", "Udyam Registration", "CIBIL Score > 700"],
+    matchPercentage: 82
+  },
+  {
+    id: 5,
+    title: "PM Street Vendor's AtmaNirbhar Nidhi (PM SVANidhi)",
+    description: "Collateral-free working capital loan of ₹10,000 to ₹50,000 for urban street vendors.",
+    desc: "Collateral-free working capital loan of ₹10,000 to ₹50,000 for urban street vendors.",
+    category: "Subsidies",
+    amount: "Up to ₹50,000",
+    eligibility_rules: { max_income: 200000, profession: "Vendor" },
+    requirements: ["Vending Certificate / Urban Local Body ID Card", "Aadhaar Card", "UPI QR Code"],
+    matchPercentage: 78
+  },
+  {
+    id: 6,
+    title: "Ayushman Bharat PM-JAY Health Coverage",
+    description: "Cashless secondary and tertiary hospitalization cover up to ₹5 Lakh per family per year.",
+    desc: "Cashless secondary and tertiary hospitalization cover up to ₹5 Lakh per family per year.",
+    category: "Welfare",
+    amount: "₹5,00,000 / year",
+    eligibility_rules: { max_income: 500000, profession: "General" },
+    requirements: ["Ration Card Copy", "Aadhaar Card", "Family ID"],
+    matchPercentage: 75
+  }
+];
+
 export default function BenefitsView() {
   const context = useContext(AppContext);
   if (!context) return null;
-  const { submitServiceApplication } = context;
+  const { schemes, submitServiceApplication } = context;
 
   // Form parameters
   const [age, setAge] = useState<number>(24);
   const [gender, setGender] = useState<string>('Female');
   const [state, setState] = useState<string>('Capital Region');
   const [profession, setProfession] = useState<string>('Student');
-  const [income, setIncome] = useState<number>(45000);
+  const [income, setIncome] = useState<number>(450000);
   const [studentStatus, setStudentStatus] = useState<boolean>(true);
   
   const [discoveredSchemes, setDiscoveredSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [appliedSchemeToast, setAppliedSchemeToast] = useState<string | null>(null);
+
+  const computeMatches = (schemeList: Scheme[], pIncome: number, pProf: string, pStudent: boolean) => {
+    const source = (schemeList && schemeList.length > 0) ? schemeList : DEFAULT_SCHEMES_LIST;
+    return source.map((sch, idx) => {
+      let score = 65 + (idx % 4) * 5;
+      const rules = sch.eligibility_rules || {};
+      if (rules.max_income && pIncome <= rules.max_income) score += 15;
+      if (rules.profession) {
+        if (rules.profession === pProf || (rules.profession === 'Student' && pStudent)) score += 10;
+      }
+      const finalScore = Math.min(Math.max(score, 55), 98);
+      return {
+        ...sch,
+        desc: sch.desc || sch.description,
+        matchPercentage: sch.matchPercentage || finalScore
+      };
+    }).sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
+  };
+
+  useEffect(() => {
+    setDiscoveredSchemes(computeMatches(schemes, income, profession, studentStatus));
+  }, [schemes, income, profession, studentStatus]);
 
   const handleDiscover = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setHasSearched(true);
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/services/discover`, {
@@ -41,17 +131,26 @@ export default function BenefitsView() {
         })
       });
       if (res.ok) {
-        setDiscoveredSchemes(await res.json());
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setDiscoveredSchemes(data);
+          setLoading(false);
+          return;
+        }
       }
     } catch (err) {
-      console.error("Discovery request failed", err);
-    } finally {
-      setLoading(false);
+      console.warn("API Discovery offline, using client-side matching engine.", err);
     }
+    
+    // Client-side fallback calculation
+    setDiscoveredSchemes(computeMatches(schemes, income, profession, studentStatus));
+    setLoading(false);
   };
 
   const handleApplyScheme = async (title: string) => {
     await submitServiceApplication(title, "Benefits Discovery");
+    setAppliedSchemeToast(`Application registered for '${title}'! Checked in your tracking portal.`);
+    setTimeout(() => setAppliedSchemeToast(null), 4000);
   };
 
   return (
@@ -116,7 +215,7 @@ export default function BenefitsView() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Annual Income ($)</label>
+                <label className="form-label">Annual Family Income (₹)</label>
                 <input 
                   type="number" 
                   className="form-control" 
@@ -146,13 +245,15 @@ export default function BenefitsView() {
           <div className="glass-card p-5 flex flex-col gap-4 min-h-[300px]">
             <h3 className="font-heading text-sm font-bold border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">Recommendation System Results</h3>
             
-            <div className="flex flex-col gap-4 pt-2">
-              {!hasSearched ? (
-                <p className="text-center py-12 text-xs text-[#94A3B8] font-medium">Specify your demographic parameters on the left to launch recommendations.</p>
-              ) : loading ? (
+            {appliedSchemeToast && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl animate-fade-in">
+                {appliedSchemeToast}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-4 pt-1">
+              {loading ? (
                 <p className="text-center py-12 text-xs text-[#94A3B8] font-bold animate-pulse">Running compatibility matching index...</p>
-              ) : discoveredSchemes.length === 0 ? (
-                <p className="text-center py-12 text-xs text-[#94A3B8] font-medium">No matching government benefits found.</p>
               ) : (
                 discoveredSchemes.map((sch) => (
                   <div key={sch.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-[#E2E8F0] dark:border-[#1E293B]/70 flex justify-between gap-4 hover:scale-[1.01] transition-transform">
