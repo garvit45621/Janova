@@ -272,46 +272,89 @@ export default function VoiceVaniView() {
     }
   };
 
+  const [micStatus, setMicStatus] = useState<string>('');
+
   const toggleMicListening = () => {
-    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      const langMap: Record<string, string> = {
-        'Hindi': 'hi-IN',
-        'Kannada': 'kn-IN',
-        'Tamil': 'ta-IN',
-        'Telugu': 'te-IN',
-        'Marathi': 'mr-IN',
-        'Bengali': 'bn-IN',
-        'English': 'en-IN'
-      };
-
-      recognition.lang = langMap[selectedLang] || 'hi-IN';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setVoiceQuery(transcript);
-        setIsListening(false);
-        handleVoiceProcess(transcript);
-      };
-      recognition.onerror = () => setIsListening(false);
-      recognition.onend = () => setIsListening(false);
-
-      recognition.start();
-    } else {
-      // Fallback simulation for browsers without WebSpeech microphone API permission
-      setIsListening(true);
-      setTimeout(() => {
-        setIsListening(false);
-        const sampleQuery = languages.find(l => l.name === selectedLang)?.sample || 'How to register for citizen benefits?';
-        setVoiceQuery(sampleQuery);
-        handleVoiceProcess(sampleQuery);
-      }, 2000);
+    if (isListening) {
+      setIsListening(false);
+      setMicStatus('');
+      if (typeof window !== 'undefined' && (window as any)._recognitionInstance) {
+        try { (window as any)._recognitionInstance.stop(); } catch (e) {}
+      }
+      return;
     }
+
+    setMicStatus(`🎙️ Initializing mic in ${selectedLang}...`);
+
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      try {
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        const recognition = new SpeechRecognition();
+        (window as any)._recognitionInstance = recognition;
+
+        const langMap: Record<string, string> = {
+          'Hindi': 'hi-IN',
+          'Kannada': 'kn-IN',
+          'Tamil': 'ta-IN',
+          'Telugu': 'te-IN',
+          'Marathi': 'mr-IN',
+          'Bengali': 'bn-IN',
+          'English': 'en-IN'
+        };
+
+        recognition.lang = langMap[selectedLang] || 'hi-IN';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+          setIsListening(true);
+          setMicStatus(`🎙️ Listening in ${selectedLang}... Speak your question now!`);
+        };
+
+        recognition.onresult = (event: any) => {
+          if (event.results && event.results[0] && event.results[0][0]) {
+            const transcript = event.results[0][0].transcript;
+            setVoiceQuery(transcript);
+            setIsListening(false);
+            setMicStatus(`Captured: "${transcript}"`);
+            handleVoiceProcess(transcript);
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.warn("Speech recognition notice:", event.error);
+          setIsListening(false);
+          setMicStatus(`Microphone access quiet/blocked. Running Voice AI assistant...`);
+          
+          const sampleQuery = voiceQuery.trim() || languages.find(l => l.name === selectedLang)?.sample || 'Passport application procedure';
+          setVoiceQuery(sampleQuery);
+          handleVoiceProcess(sampleQuery);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognition.start();
+      } catch (err) {
+        console.warn("Speech recognition start fallback:", err);
+        runFallbackVoiceSimulation();
+      }
+    } else {
+      runFallbackVoiceSimulation();
+    }
+  };
+
+  const runFallbackVoiceSimulation = () => {
+    setIsListening(true);
+    setMicStatus(`🎙️ Listening in ${selectedLang}... (Simulated Voice)`);
+    setTimeout(() => {
+      setIsListening(false);
+      const sampleQuery = voiceQuery.trim() || languages.find(l => l.name === selectedLang)?.sample || 'How to renew passport online?';
+      setVoiceQuery(sampleQuery);
+      setMicStatus(`Captured: "${sampleQuery}"`);
+      handleVoiceProcess(sampleQuery);
+    }, 1500);
   };
 
   return (
@@ -378,7 +421,7 @@ export default function VoiceVaniView() {
             </span>
 
             {/* Giant Animated Pulse Mic Button */}
-            <div className="relative flex items-center justify-center my-4">
+            <div className="relative flex flex-col items-center justify-center my-4">
               {isListening && (
                 <>
                   <div className="absolute w-36 h-36 bg-emerald-500/20 rounded-full animate-ping" />
@@ -399,6 +442,12 @@ export default function VoiceVaniView() {
                   {isListening ? 'Listening...' : 'Tap to Speak'}
                 </span>
               </button>
+
+              {micStatus && (
+                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-3 animate-fade-in">
+                  {micStatus}
+                </span>
+              )}
             </div>
 
             {/* Text Query Input Option */}
