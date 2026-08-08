@@ -669,12 +669,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('janova-theme', theme);
   }, [theme]);
 
-  // Sync user data whenever user logs in
+  // Sync user data whenever user logs in or out
   useEffect(() => {
-    if (user) {
+    if (user && user.email) {
       reloadUserData();
+    } else {
+      setApplications([]);
+      setDocuments([]);
+      setDeadlines([]);
     }
-  }, [user?.id]);
+  }, [user?.email]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -717,17 +721,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const reloadUserData = async () => {
-    if (!user) return;
+    if (!user || !user.email) return;
+    const userKey = user.email.toLowerCase();
 
     // First load from local storage fallback so offline/re-login works instantly
     try {
-      const savedDocs = localStorage.getItem(`janova-documents-${user.id}`);
+      const savedDocs = localStorage.getItem(`janova-documents-${userKey}`);
       if (savedDocs) setDocuments(JSON.parse(savedDocs));
 
-      const savedApps = localStorage.getItem(`janova-applications-${user.id}`);
+      const savedApps = localStorage.getItem(`janova-applications-${userKey}`);
       if (savedApps) setApplications(JSON.parse(savedApps));
 
-      const savedDls = localStorage.getItem(`janova-deadlines-${user.id}`);
+      const savedDls = localStorage.getItem(`janova-deadlines-${userKey}`);
       if (savedDls) setDeadlines(JSON.parse(savedDls));
 
       const savedCmps = localStorage.getItem('janova-complaints');
@@ -743,7 +748,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         const data = await resDoc.json();
         const docs = data.documents || [];
         setDocuments(docs);
-        localStorage.setItem(`janova-documents-${user.id}`, JSON.stringify(docs));
+        localStorage.setItem(`janova-documents-${userKey}`, JSON.stringify(docs));
       }
 
       // Fetch Applications
@@ -751,7 +756,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       if (resApp.ok) {
         const apps = await resApp.json();
         setApplications(apps);
-        localStorage.setItem(`janova-applications-${user.id}`, JSON.stringify(apps));
+        localStorage.setItem(`janova-applications-${userKey}`, JSON.stringify(apps));
       }
 
       // Fetch Deadlines
@@ -759,7 +764,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       if (resDl.ok) {
         const dls = await resDl.json();
         setDeadlines(dls);
-        localStorage.setItem(`janova-deadlines-${user.id}`, JSON.stringify(dls));
+        localStorage.setItem(`janova-deadlines-${userKey}`, JSON.stringify(dls));
       }
 
       // Reload complaints
@@ -774,6 +779,31 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const getOrCreateUser = (email: string, name?: string, phone?: string, address?: string, photo?: string) => {
+    const userKey = email.toLowerCase();
+    const saved = localStorage.getItem(`janova-user-profile-${userKey}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    const namePart = name || email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const newUser = {
+      id: Math.floor(1000 + Math.random() * 9000),
+      email: email,
+      role: 'user',
+      name: namePart || 'Garvit Sarna',
+      citizenId: `JV-${Math.floor(100000 + Math.random() * 900000)}`,
+      phone: phone || '+91 9876543210',
+      address: address || 'New Citizen Registry',
+      photo: photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop',
+      notificationPreferences: { email: true, sms: true, push: false },
+      twoFactorEnabled: true
+    };
+    localStorage.setItem(`janova-user-profile-${userKey}`, JSON.stringify(newUser));
+    return newUser;
+  };
+
   const sendLoginOtp = async (email: string, password: string): Promise<{ success: boolean; message?: string; otp_code?: string }> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/send-otp`, {
@@ -786,25 +816,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         if (data.user) {
           setUser(data.user);
           localStorage.setItem('janova-user', JSON.stringify(data.user));
+          localStorage.setItem(`janova-user-profile-${data.user.email.toLowerCase()}`, JSON.stringify(data.user));
         }
         return { success: true, message: data.message, otp_code: data.otp_code };
       }
     } catch (e) {
       console.warn("sendLoginOtp network fallback active:", e);
     }
-    const namePart = email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const fallbackUser = {
-      id: 1,
-      email: email,
-      role: 'user',
-      name: namePart || 'Garvit Sarna',
-      citizenId: 'JV-982-110',
-      phone: '+91 9876543210',
-      address: 'New Citizen Registry',
-      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop',
-      notificationPreferences: { email: true, sms: true, push: false },
-      twoFactorEnabled: true
-    };
+    const fallbackUser = getOrCreateUser(email);
     setUser(fallbackUser);
     localStorage.setItem('janova-user', JSON.stringify(fallbackUser));
     return { 
@@ -824,45 +843,21 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         const data = await res.json();
         setUser(data.user);
         localStorage.setItem('janova-user', JSON.stringify(data.user));
+        localStorage.setItem(`janova-user-profile-${data.user.email.toLowerCase()}`, JSON.stringify(data.user));
         return { success: true };
       }
     } catch (e) {
       console.warn("verifyLoginOtp fallback active:", e);
     }
 
-    const namePart = email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const fallbackUser = {
-      id: 1,
-      email: email,
-      role: 'user',
-      name: namePart || 'Garvit Sarna',
-      citizenId: 'JV-982-110',
-      phone: '+91 9876543210',
-      address: 'New Citizen Registry',
-      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop',
-      notificationPreferences: { email: true, sms: true, push: false },
-      twoFactorEnabled: true
-    };
+    const fallbackUser = getOrCreateUser(email);
     setUser(fallbackUser);
     localStorage.setItem('janova-user', JSON.stringify(fallbackUser));
     return { success: true };
   };
 
   const loginWithGoogle = async (email: string, name?: string, photo?: string): Promise<boolean> => {
-    const namePart = name || email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const userObj = {
-      id: 1,
-      email: email,
-      role: 'user',
-      name: namePart || 'Garvit Sarna',
-      citizenId: 'JV-G98210',
-      phone: '+91 9876543210',
-      address: 'Google Verified Citizen Account',
-      photo: photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop',
-      notificationPreferences: { email: true, sms: true, push: false },
-      twoFactorEnabled: true
-    };
-    
+    const userObj = getOrCreateUser(email, name, undefined, 'Google Verified Citizen Account', photo);
     setUser(userObj);
     localStorage.setItem('janova-user', JSON.stringify(userObj));
 
@@ -870,7 +865,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       fetch(`${API_BASE_URL}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name: namePart, photo })
+        body: JSON.stringify({ email, name: userObj.name, photo })
       }).catch(err => console.warn("Background email trigger:", err));
     } catch (e) {
       console.warn("Google Login background email trigger error:", e);
@@ -890,25 +885,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         const data = await res.json();
         setUser(data.user);
         localStorage.setItem('janova-user', JSON.stringify(data.user));
+        localStorage.setItem(`janova-user-profile-${data.user.email.toLowerCase()}`, JSON.stringify(data.user));
         return true;
       }
     } catch (e) {
       console.warn("Login request fallback active:", e);
     }
 
-    const namePart = email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const fallbackUser = {
-      id: 1,
-      email: email,
-      role: 'user',
-      name: namePart || 'Garvit Sarna',
-      citizenId: 'JV-982-110',
-      phone: '+91 9876543210',
-      address: 'New Citizen Registry',
-      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop',
-      notificationPreferences: { email: true, sms: true, push: false },
-      twoFactorEnabled: true
-    };
+    const fallbackUser = getOrCreateUser(email);
     setUser(fallbackUser);
     localStorage.setItem('janova-user', JSON.stringify(fallbackUser));
     return true;
@@ -925,24 +909,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         const data = await res.json();
         setUser(data.user);
         localStorage.setItem('janova-user', JSON.stringify(data.user));
+        localStorage.setItem(`janova-user-profile-${data.user.email.toLowerCase()}`, JSON.stringify(data.user));
         return true;
       }
     } catch (e) {
       console.warn("Registration request fallback active:", e);
     }
 
-    const fallbackUser = {
-      id: 1,
-      email: email,
-      role: 'user',
-      name: name || 'Garvit Sarna',
-      citizenId: `JV-${Math.floor(100000 + Math.random() * 900000)}`,
-      phone: phone || '+91 9876543210',
-      address: address || 'New Citizen Registry',
-      photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop',
-      notificationPreferences: { email: true, sms: true, push: false },
-      twoFactorEnabled: true
-    };
+    const fallbackUser = getOrCreateUser(email, name, phone, address);
     setUser(fallbackUser);
     localStorage.setItem('janova-user', JSON.stringify(fallbackUser));
     return true;
@@ -951,11 +925,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('janova-user');
+    setApplications([]);
+    setDocuments([]);
+    setDeadlines([]);
     setActiveView('landing');
   };
 
   const submitServiceApplication = async (title: string, category: string) => {
     if (!user) return;
+    const userKey = user.email.toLowerCase();
     const newApp: Application = {
       id: Date.now(),
       user_id: user.id,
@@ -971,7 +949,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     setApplications(prev => {
       const updated = [newApp, ...prev];
-      localStorage.setItem(`janova-applications-${user.id}`, JSON.stringify(updated));
+      localStorage.setItem(`janova-applications-${userKey}`, JSON.stringify(updated));
       return updated;
     });
 
@@ -991,6 +969,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const uploadFile = async (name: string, category: string, size: string, fileObj?: File) => {
     if (!user) return;
+    const userKey = user.email.toLowerCase();
     const newDoc: Document = {
       id: Date.now(),
       user_id: user.id,
@@ -1004,7 +983,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     setDocuments(prev => {
       const updated = [newDoc, ...prev];
-      localStorage.setItem(`janova-documents-${user.id}`, JSON.stringify(updated));
+      localStorage.setItem(`janova-documents-${userKey}`, JSON.stringify(updated));
       return updated;
     });
 
@@ -1032,9 +1011,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const removeFile = async (id: number) => {
     if (!user) return;
+    const userKey = user.email.toLowerCase();
     setDocuments(prev => {
       const updated = prev.filter(d => d.id !== id);
-      localStorage.setItem(`janova-documents-${user.id}`, JSON.stringify(updated));
+      localStorage.setItem(`janova-documents-${userKey}`, JSON.stringify(updated));
       return updated;
     });
 
@@ -1107,6 +1087,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const createPersonalDeadline = async (title: string, date: string, type: string, urgency: string) => {
     if (!user) return;
+    const userKey = user.email.toLowerCase();
     const newDl: Deadline = {
       id: Date.now(),
       user_id: user.id,
@@ -1118,7 +1099,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     setDeadlines(prev => {
       const updated = [newDl, ...prev];
-      localStorage.setItem(`janova-deadlines-${user.id}`, JSON.stringify(updated));
+      localStorage.setItem(`janova-deadlines-${userKey}`, JSON.stringify(updated));
       return updated;
     });
 
@@ -1142,6 +1123,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateUserProfile = async (name: string, phone: string, address: string, prefs: any, twoFactor: boolean) => {
     if (!user) return;
+    const userKey = user.email.toLowerCase();
     const updatedUser = {
       ...user,
       name,
@@ -1152,6 +1134,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
     setUser(updatedUser);
     localStorage.setItem('janova-user', JSON.stringify(updatedUser));
+    localStorage.setItem(`janova-user-profile-${userKey}`, JSON.stringify(updatedUser));
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/profile/${user.id}`, {
@@ -1171,6 +1154,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         };
         setUser(finalUser);
         localStorage.setItem('janova-user', JSON.stringify(finalUser));
+        localStorage.setItem(`janova-user-profile-${userKey}`, JSON.stringify(finalUser));
       }
     } catch (e) {
       console.warn("Profile updated in local storage.", e);
