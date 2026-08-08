@@ -1,25 +1,12 @@
 from datetime import datetime, date, timedelta
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from .models import User, Profile, Document, Service, Scheme, Complaint, Application, Deadline, Notification, BusinessTemplate, LifeEvent, Checklist, EmergencyAlert, EmergencyHelpline, ShelterLocation, SOSAlert
 
 def seed_data(db: Session):
     # We clean and re-seed to ensure the database holds the exact required records
-    db.query(SOSAlert).delete()
-    db.query(ShelterLocation).delete()
-    db.query(EmergencyHelpline).delete()
-    db.query(EmergencyAlert).delete()
-    db.query(Checklist).delete()
-    db.query(Notification).delete()
-    db.query(Deadline).delete()
-    db.query(Application).delete()
-    db.query(Complaint).delete()
-    db.query(Document).delete()
-    db.query(Profile).delete()
-    db.query(User).delete()
-    db.query(Service).delete()
-    db.query(Scheme).delete()
-    db.query(BusinessTemplate).delete()
-    db.query(LifeEvent).delete()
+    for table in ["sos_alerts", "shelter_locations", "emergency_helplines", "emergency_alerts", "checklists", "notifications", "deadlines", "applications", "complaints", "documents", "profiles", "users", "services", "schemes", "business_templates", "life_events"]:
+        db.execute(text(f"DELETE FROM {table}"))
     db.commit()
 
     # 1. Seed 30+ Government Services

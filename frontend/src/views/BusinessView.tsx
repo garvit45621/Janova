@@ -16,7 +16,7 @@ export default function BusinessView() {
   const [charterNum, setCharterNum] = useState('');
   const [error, setError] = useState('');
 
-  const currentTemplate = bizTemplates.find(b => b.name === activeBiz);
+  const currentTemplate = bizTemplates.find(b => b.name.toLowerCase() === activeBiz.toLowerCase()) || bizTemplates[0];
 
   const handleSubmitLLC = async (e: React.FormEvent) => {
     e.preventDefault();

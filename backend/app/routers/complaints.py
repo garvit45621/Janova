@@ -14,8 +14,8 @@ class CreateComplaintRequest(BaseModel):
     category: str
     description: str
     location: str
-    x_coord: int
-    y_coord: int
+    x_coord: float
+    y_coord: float
 
 @router.get("/list")
 def list_complaints(db: Session = Depends(get_db)):

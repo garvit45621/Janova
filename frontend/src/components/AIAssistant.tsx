@@ -2,6 +2,7 @@
 
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
+import { API_BASE_URL } from '../config/api';
 
 export default function AIAssistant() {
   const context = useContext(AppContext);
@@ -32,7 +33,7 @@ export default function AIAssistant() {
     setIsTyping(true);
 
     try {
-      const res = await fetch('http://localhost:8000/api/ai/chat', {
+      const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,7 +55,7 @@ export default function AIAssistant() {
   const handleTranslateText = async () => {
     if (!legalInput.trim()) return;
     try {
-      const res = await fetch('http://localhost:8000/api/ai/translate', {
+      const res = await fetch(`${API_BASE_URL}/api/ai/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ legal_text: legalInput })

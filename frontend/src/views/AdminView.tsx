@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 interface MetricData {
   activeUsers: number;
@@ -34,14 +35,14 @@ export default function AdminView() {
 
   const fetchAdminData = async () => {
     try {
-      const resStats = await fetch('http://localhost:8000/api/admin/dashboard-stats');
+      const resStats = await fetch(`${API_BASE_URL}/api/admin/dashboard-stats`);
       if (resStats.ok) {
         const data = await resStats.json();
         setMetrics(data.metrics);
         setLogs(data.logs);
       }
 
-      const resUsers = await fetch('http://localhost:8000/api/admin/users');
+      const resUsers = await fetch(`${API_BASE_URL}/api/admin/users`);
       if (resUsers.ok) {
         setUsers(await resUsers.json());
       }

@@ -1,6 +1,16 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-border-color: var(--border-color);
+}
 
 @layer base {
   :root {
@@ -37,9 +47,9 @@
   }
 
   .dark {
-    color-scheme: light;
-    --bg-primary: #FAF6F0; /* Signature Warm Cream Background */
-    --bg-secondary: #FFFFFF; /* Pure White Card Container */
+    color-scheme: dark;
+    --bg-primary: #0B132B; /* Signature Dark Navy Background */
+    --bg-secondary: #1C2541; /* Dark Card Container */
     --bg-tertiary: #172033;
     --text-primary: #F8FAFC;
     --text-secondary: #94A3B8;

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { EmergencyAlert, EmergencyHelpline, ShelterLocation } from '../types';
+import { API_BASE_URL } from '../config/api';
 
 export default function EmergencyView() {
   const context = useContext(AppContext);
@@ -18,18 +19,47 @@ export default function EmergencyView() {
   // SOS state
   const [showSosModal, setShowSosModal] = useState(false);
   const [sosStatus, setSosStatus] = useState<string | null>(null);
-  const [userLocationInput, setUserLocationInput] = useState('Residency Rd, Central Bengaluru (GPS Verified)');
+  const [userLocationInput, setUserLocationInput] = useState('Locating via GPS...');
 
   useEffect(() => {
     fetchData();
+    detectGpsLocation();
   }, []);
+
+  const detectGpsLocation = () => {
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          let address = `GPS Verified: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
+          try {
+            const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data && data.display_name) {
+                address = data.display_name.split(',').slice(0, 3).join(',').trim() + ' (GPS Verified)';
+              }
+            }
+          } catch (e) {}
+          setUserLocationInput(address);
+        },
+        (err) => {
+          setUserLocationInput(user?.address || 'Central District, Ward 12');
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      setUserLocationInput(user?.address || 'Central District, Ward 12');
+    }
+  };
 
   const fetchData = async () => {
     try {
       const [resAlt, resHlp, resShl] = await Promise.all([
-        fetch('http://localhost:8000/api/emergency/alerts'),
-        fetch('http://localhost:8000/api/emergency/helplines'),
-        fetch('http://localhost:8000/api/emergency/shelters')
+        fetch(`${API_BASE_URL}/api/emergency/alerts`),
+        fetch(`${API_BASE_URL}/api/emergency/helplines`),
+        fetch(`${API_BASE_URL}/api/emergency/shelters`)
       ]);
 
       if (resAlt.ok) setAlerts(await resAlt.json());
@@ -49,7 +79,7 @@ export default function EmergencyView() {
   const handleDispatchSos = async () => {
     if (!user) return;
     try {
-      const res = await fetch('http://localhost:8000/api/emergency/sos', {
+      const res = await fetch(`${API_BASE_URL}/api/emergency/sos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

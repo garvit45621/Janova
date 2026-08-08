@@ -3,6 +3,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Document } from '../types';
+import { API_BASE_URL } from '../config/api';
 
 export default function VaultView() {
   const context = useContext(AppContext);
@@ -64,7 +65,7 @@ export default function VaultView() {
     if (!activeShareDoc) return;
 
     try {
-      const res = await fetch('http://localhost:8000/api/vault/share', {
+      const res = await fetch(`${API_BASE_URL}/api/vault/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ document_id: activeShareDoc.id, duration_hours: shareHours })

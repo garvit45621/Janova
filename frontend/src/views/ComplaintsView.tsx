@@ -44,6 +44,18 @@ export default function ComplaintsView() {
     setError('');
   };
 
+  // Search and filter states
+  const [filterStatus, setFilterStatus] = useState<'All' | 'new' | 'investigating' | 'resolved'>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredComplaints = complaints.filter(cmp => {
+    const matchesStatus = filterStatus === 'All' || cmp.status?.toLowerCase() === filterStatus.toLowerCase();
+    const matchesSearch = cmp.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          cmp.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          cmp.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
   return (
     <div className="flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full animate-scale-in text-left">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -128,7 +140,7 @@ export default function ComplaintsView() {
             {/* Map Frame */}
             <div className="w-full h-[320px] rounded-xl overflow-hidden relative">
               <LeafletMap 
-                complaints={complaints}
+                complaints={filteredComplaints}
                 selectedX={xCoord}
                 selectedY={yCoord}
                 onMapClick={handleMapSelection}
@@ -138,9 +150,39 @@ export default function ComplaintsView() {
 
           {/* Community list */}
           <div className="glass-card p-5 flex flex-col gap-4">
-            <h3 className="font-heading text-sm font-bold border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">Active Community Reports</h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+              <h3 className="font-heading text-sm font-bold">Active Community Reports ({filteredComplaints.length})</h3>
+              
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="Filter issues..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-white dark:bg-[#0F1626] focus:outline-none w-full sm:w-36"
+                />
+                
+                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold">
+                  {(['All', 'new', 'investigating', 'resolved'] as const).map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setFilterStatus(st)}
+                      className={`px-2 py-1 rounded-md capitalize transition-all cursor-pointer ${
+                        filterStatus === st 
+                          ? 'bg-white dark:bg-slate-700 shadow-xs text-blue-600 dark:text-blue-400 font-extrabold' 
+                          : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-4 max-h-[350px] overflow-y-auto pr-1">
-              {complaints.map((cmp) => (
+              {filteredComplaints.map((cmp) => (
                 <div key={cmp.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-[#E2E8F0] dark:border-[#1E293B]/70 flex gap-4 hover:scale-[1.005] transition-transform">
                   
                   {/* Upvote button */}
@@ -167,11 +209,11 @@ export default function ComplaintsView() {
                     </div>
 
                     <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] leading-relaxed">{cmp.description}</p>
-                    <span className="text-[9px] text-[#94A3B8] font-bold mt-1">Reported by Resident • Status timeline tracked</span>
+                    <span className="text-[9px] text-[#94A3B8] font-bold mt-1">Reported by Resident • Category: {cmp.category}</span>
                   </div>
                 </div>
               ))}
-              {complaints.length === 0 && <p className="text-xs text-[#94A3B8] text-center py-4">No reported complaints.</p>}
+              {filteredComplaints.length === 0 && <p className="text-xs text-[#94A3B8] text-center py-4">No matching complaints found.</p>}
             </div>
           </div>
 

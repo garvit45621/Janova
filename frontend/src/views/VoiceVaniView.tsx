@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 export default function VoiceVaniView() {
   const [selectedLang, setSelectedLang] = useState<'Hindi' | 'Kannada' | 'Tamil' | 'Telugu' | 'Marathi' | 'Bengali' | 'English'>('Hindi');
@@ -33,7 +34,7 @@ export default function VoiceVaniView() {
     setVaniResult(null);
 
     try {
-      const res = await fetch('http://localhost:8000/api/ai/voice-vani', {
+      const res = await fetch(`${API_BASE_URL}/api/ai/voice-vani`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

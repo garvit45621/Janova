@@ -120,17 +120,18 @@ export default function LeafletMapInner({ complaints, selectedX, selectedY, onMa
       zoomControl: true
     });
 
-    const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY || 'HJk29XEBIyfYSK1VO5zR';
-    const tileUrl = maptilerKey
-      ? `https://api.maptiler.com/maps/dataviz-dark/{z}/{x}/{y}.png?key=${maptilerKey}`
-      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const primaryTileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    const fallbackTileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-    L.tileLayer(tileUrl, {
-      attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      tileSize: 512,
-      zoomOffset: -1,
-      maxZoom: 20
+    const tileLayer = L.tileLayer(primaryTileUrl, {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
     }).addTo(map);
+
+    tileLayer.on('tileerror', () => {
+      tileLayer.setUrl(fallbackTileUrl);
+    });
 
     const markerGroup = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { LifeEvent } from '../types';
+import { API_BASE_URL } from '../config/api';
 
 export default function LifeEventsView() {
   const context = useContext(AppContext);
@@ -28,7 +29,7 @@ export default function LifeEventsView() {
   const fetchChecklist = async () => {
     if (!activeEvent || !user) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/services/life-events/checklist/${user.id}/${activeEvent.id}`);
+      const res = await fetch(`${API_BASE_URL}/api/services/life-events/checklist/${user.id}/${activeEvent.id}`);
       if (res.ok) {
         const data = await res.json();
         setChecklist(data.checked_items || {});
@@ -44,7 +45,7 @@ export default function LifeEventsView() {
     setChecklist(updated);
 
     try {
-      await fetch('http://localhost:8000/api/services/life-events/checklist', {
+      await fetch(`${API_BASE_URL}/api/services/life-events/checklist`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

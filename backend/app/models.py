@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Date, ForeignKey, JSON
+from sqlalchemy import Column, Integer, Float, String, Text, Boolean, DateTime, Date, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -83,8 +83,8 @@ class Complaint(Base):
     category = Column(String(100), nullable=False) # Potholes, Garbage, Water Leakage, Streetlight Failure, Road Damage, Illegal Dumping
     description = Column(Text, nullable=False)
     location = Column(String(255), nullable=False)
-    x_coord = Column(Integer, nullable=False)
-    y_coord = Column(Integer, nullable=False)
+    x_coord = Column(Float, nullable=False)
+    y_coord = Column(Float, nullable=False)
     photo_url = Column(String(500))
     status = Column(String(50), default="new") # new, investigating, resolved
     upvotes = Column(Integer, default=1)

@@ -2,6 +2,7 @@
 
 import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
+import { API_BASE_URL } from '../config/api';
 
 export default function LandingView() {
   const context = useContext(AppContext);
