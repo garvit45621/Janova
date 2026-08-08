@@ -14,9 +14,33 @@ class SOSRequest(BaseModel):
     user_phone: Optional[str] = None
     location: str
 
+class CreateEmergencyAlertRequest(BaseModel):
+    title: str
+    severity: str # critical, high, moderate, info
+    category: str # Weather, Flood, Power Outage, Health, Traffic
+    location: str
+    description: str
+    safety_steps: List[str]
+
 @router.get("/alerts")
 def list_emergency_alerts(db: Session = Depends(get_db)):
     return db.query(EmergencyAlert).filter(EmergencyAlert.active == True).order_by(EmergencyAlert.id.desc()).all()
+
+@router.post("/alerts/create")
+def create_emergency_alert(req: CreateEmergencyAlertRequest, db: Session = Depends(get_db)):
+    alert = EmergencyAlert(
+        title=req.title,
+        severity=req.severity,
+        category=req.category,
+        location=req.location,
+        description=req.description,
+        safety_steps=req.safety_steps,
+        active=True
+    )
+    db.add(alert)
+    db.commit()
+    db.refresh(alert)
+    return alert
 
 @router.get("/helplines")
 def list_emergency_helplines(db: Session = Depends(get_db)):

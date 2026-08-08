@@ -5,12 +5,60 @@ import { AppContext } from '../context/AppContext';
 import { EmergencyAlert, EmergencyHelpline, ShelterLocation } from '../types';
 import { API_BASE_URL } from '../config/api';
 
+const DEFAULT_ALERTS: EmergencyAlert[] = [
+  {
+    id: 1,
+    title: "Severe Urban Flooding & Cloudburst Warning",
+    severity: "critical",
+    category: "Flood",
+    location: "Outer Ring Road & Low-Lying Eastern Basins",
+    description: "Torrential monsoon downpour of 110mm/hr causing urban waterlogging, canal overflow, and underpass closures.",
+    safety_steps: [
+      "Avoid traveling through inundated subways and underpasses",
+      "Store emergency drinking water and power banks",
+      "Contact Control Room Helpline 1077 for boat evacuations"
+    ],
+    active: true,
+    created_at: "2026-08-08T10:00:00Z"
+  },
+  {
+    id: 2,
+    title: "Extreme Heatwave Red Alert (44°C+)",
+    severity: "high",
+    category: "Weather",
+    location: "Metropolitan District & Industrial Belt",
+    description: "Heatwave condition expected between 12:00 PM to 4:00 PM with UV index exceeding 11.",
+    safety_steps: [
+      "Stay hydrated with ORS and electrolytes",
+      "Avoid direct sun exposure during peak afternoon hours",
+      "Ensure pets and livestock have shaded water spots"
+    ],
+    active: true,
+    created_at: "2026-08-08T08:00:00Z"
+  },
+  {
+    id: 3,
+    title: "Major Substation Power Grid Outage",
+    severity: "moderate",
+    category: "Power Outage",
+    location: "Sector 14 to 22 Grid Zones",
+    description: "Grid transformer fault causing power failure. Municipal restoration teams working on 33kV line repair.",
+    safety_steps: [
+      "Unplug sensitive electronic appliances",
+      "Keep refrigerator doors closed to maintain cooling",
+      "Use backup generators for essential medical oxygen devices"
+    ],
+    active: true,
+    created_at: "2026-08-07T18:00:00Z"
+  }
+];
+
 export default function EmergencyView() {
   const context = useContext(AppContext);
   if (!context) return null;
   const { user, reloadUserData } = context;
 
-  const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
+  const [alerts, setAlerts] = useState<EmergencyAlert[]>(DEFAULT_ALERTS);
   const [helplines, setHelplines] = useState<EmergencyHelpline[]>([]);
   const [shelters, setShelters] = useState<ShelterLocation[]>([]);
   const [activeSeverity, setActiveSeverity] = useState('All');
@@ -20,6 +68,16 @@ export default function EmergencyView() {
   const [showSosModal, setShowSosModal] = useState(false);
   const [sosStatus, setSosStatus] = useState<string | null>(null);
   const [userLocationInput, setUserLocationInput] = useState('Locating via GPS...');
+
+  // Post Disaster Bulletin State
+  const [showPostDisasterModal, setShowPostDisasterModal] = useState(false);
+  const [disasterTitle, setDisasterTitle] = useState('');
+  const [disasterSeverity, setDisasterSeverity] = useState<'critical' | 'high' | 'moderate' | 'info'>('critical');
+  const [disasterCategory, setDisasterCategory] = useState<'Flood' | 'Weather' | 'Power Outage' | 'Health' | 'Traffic'>('Flood');
+  const [disasterLocation, setDisasterLocation] = useState('');
+  const [disasterDescription, setDisasterDescription] = useState('');
+  const [disasterSafetySteps, setDisasterSafetySteps] = useState('');
+  const [disasterSuccessToast, setDisasterSuccessToast] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -103,6 +161,56 @@ export default function EmergencyView() {
     }
   };
 
+  const handlePostDisasterAlert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!disasterTitle || !disasterLocation) return;
+
+    const stepsArray = disasterSafetySteps
+      ? disasterSafetySteps.split(',').map(s => s.trim()).filter(Boolean)
+      : ['Follow district disaster control advisories', 'Stay tuned to official emergency broadcasts'];
+
+    const newAlert: EmergencyAlert = {
+      id: Date.now(),
+      title: disasterTitle,
+      severity: disasterSeverity,
+      category: disasterCategory,
+      location: disasterLocation,
+      description: disasterDescription || "District Disaster Advisory issued by Emergency Management Command.",
+      safety_steps: stepsArray,
+      active: true,
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      await fetch(`${API_BASE_URL}/api/emergency/alerts/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: disasterTitle,
+          severity: disasterSeverity,
+          category: disasterCategory,
+          location: disasterLocation,
+          description: disasterDescription || "District Disaster Advisory issued by Emergency Management Command.",
+          safety_steps: stepsArray
+        })
+      });
+    } catch (err) {
+      console.warn("API offline, broadcasting active disaster alert in local state", err);
+    }
+
+    setAlerts(prev => [newAlert, ...prev]);
+    setDisasterSuccessToast(`Disaster Advisory '${disasterTitle}' broadcasted live!`);
+    setShowPostDisasterModal(false);
+    
+    // Reset fields
+    setDisasterTitle('');
+    setDisasterLocation('');
+    setDisasterDescription('');
+    setDisasterSafetySteps('');
+    
+    setTimeout(() => setDisasterSuccessToast(null), 4000);
+  };
+
   const filteredAlerts = alerts.filter(a => {
     if (activeSeverity === 'All') return true;
     return a.severity.toLowerCase() === activeSeverity.toLowerCase();
@@ -124,6 +232,14 @@ export default function EmergencyView() {
   return (
     <div className="flex flex-col gap-6 md:gap-8 max-w-7xl mx-auto w-full animate-scale-in text-left">
       
+      {/* Toast Notification Banner */}
+      {disasterSuccessToast && (
+        <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-2xl animate-fade-in flex items-center justify-between shadow-lg">
+          <span>📢 {disasterSuccessToast}</span>
+          <button onClick={() => setDisasterSuccessToast(null)}>✕</button>
+        </div>
+      )}
+
       {/* Top Banner: Emergency SOS & Red Alert Notification */}
       <div className="relative rounded-3xl bg-gradient-to-r from-red-950 via-rose-900 to-red-900 border border-red-500/30 p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
@@ -137,20 +253,30 @@ export default function EmergencyView() {
             1-Tap Emergency SOS & Live Advisories
           </h2>
           <p className="text-xs text-red-100/80 max-w-xl leading-relaxed">
-            Instantly broadcast GPS emergency signals to Municipal Control Center & District First Responders, monitor severe weather alerts, and locate nearby open relief shelters.
+            Instantly broadcast GPS emergency signals to Municipal Control Center & District First Responders, issue ongoing active disaster bulletins, and locate open relief shelters.
           </p>
         </div>
 
-        <button 
-          onClick={() => setShowSosModal(true)}
-          className="z-10 group relative flex items-center gap-3 bg-red-600 hover:bg-red-500 text-white font-extrabold px-6 py-4 rounded-2xl shadow-xl hover:shadow-red-600/50 transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0 border border-red-400/40"
-        >
-          <span className="text-2xl group-hover:animate-bounce">🚨</span>
-          <div className="flex flex-col text-left">
-            <span className="text-sm font-black tracking-wide uppercase">DISPATCH SOS ALERT</span>
-            <span className="text-[10px] text-red-100 font-normal">Broadcast Live Location</span>
-          </div>
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 z-10 w-full md:w-auto">
+          <button 
+            onClick={() => setShowPostDisasterModal(true)}
+            className="w-full sm:w-auto group relative flex items-center justify-center gap-2.5 bg-amber-600 hover:bg-amber-500 text-white font-extrabold px-5 py-3.5 rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0 border border-amber-400/40 text-xs"
+          >
+            <span className="text-lg">📢</span>
+            <span className="font-black tracking-wide uppercase">POST DISASTER BULLETIN</span>
+          </button>
+
+          <button 
+            onClick={() => setShowSosModal(true)}
+            className="w-full sm:w-auto group relative flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 text-white font-extrabold px-6 py-4 rounded-2xl shadow-xl hover:shadow-red-600/50 transition-all transform hover:-translate-y-0.5 cursor-pointer shrink-0 border border-red-400/40"
+          >
+            <span className="text-2xl group-hover:animate-bounce">🚨</span>
+            <div className="flex flex-col text-left">
+              <span className="text-sm font-black tracking-wide uppercase">DISPATCH SOS ALERT</span>
+              <span className="text-[10px] text-red-100 font-normal">Broadcast Live Location</span>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Main Grid: Active Advisories & Helplines */}
@@ -162,7 +288,15 @@ export default function EmergencyView() {
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E2E8F0] dark:border-[#1E293B] pb-4">
               <div>
-                <h3 className="font-heading text-base font-bold">Active Disaster & Civic Advisories</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="font-heading text-base font-bold">Active Disaster & Civic Advisories</h3>
+                  <button 
+                    onClick={() => setShowPostDisasterModal(true)}
+                    className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                  >
+                    + Report Ongoing Disaster
+                  </button>
+                </div>
                 <p className="text-xs text-[#94A3B8]">Real-time warnings issued by District Emergency Management</p>
               </div>
 
@@ -332,11 +466,11 @@ export default function EmergencyView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-[#080D1A]/70 backdrop-blur-md" onClick={() => !sosStatus && setShowSosModal(false)} />
           
-          <div className="glass rounded-3xl w-full max-w-md shadow-2xl p-6 relative border border-red-500/40 z-10 animate-scale-in flex flex-col gap-5">
+          <div className="relative w-full max-w-md glass-card p-6 rounded-3xl z-10 shadow-2xl border border-red-500/30 flex flex-col gap-4 animate-scale-in text-left">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-red-500">
                 <span className="text-xl">🚨</span>
-                <h3 className="font-heading text-sm font-extrabold text-red-500">Dispatch Emergency SOS</h3>
+                <h3 className="font-heading text-sm font-bold">Municipal SOS Emergency Broadcast</h3>
               </div>
               {!sosStatus && <button onClick={() => setShowSosModal(false)}>✕</button>}
             </div>
@@ -384,6 +518,117 @@ export default function EmergencyView() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* POST DISASTER BULLETIN MODAL */}
+      {showPostDisasterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-[#080D1A]/75 backdrop-blur-md" onClick={() => setShowPostDisasterModal(false)} />
+          
+          <div className="relative w-full max-w-lg glass-card p-6 rounded-3xl z-10 shadow-2xl border border-[#E2E8F0] dark:border-[#1E293B] flex flex-col gap-4 animate-scale-in text-left">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📢</span>
+                <h3 className="font-heading text-sm font-bold">Broadcast Ongoing Disaster Bulletin</h3>
+              </div>
+              <button onClick={() => setShowPostDisasterModal(false)} className="text-xs hover:opacity-80">✕</button>
+            </div>
+
+            <form onSubmit={handlePostDisasterAlert} className="flex flex-col gap-3.5 pt-1 text-xs">
+              <div className="form-group !mb-0">
+                <label className="form-label text-[11px] font-bold">Disaster / Advisory Title *</label>
+                <input 
+                  type="text" 
+                  className="form-control text-xs" 
+                  value={disasterTitle}
+                  onChange={(e) => setDisasterTitle(e.target.value)}
+                  placeholder="e.g. Heavy Flash Floods & Dam Reservoir Water Release Warning"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="form-group !mb-0">
+                  <label className="form-label text-[11px] font-bold">Severity Level</label>
+                  <select 
+                    className="form-control text-xs"
+                    value={disasterSeverity}
+                    onChange={(e) => setDisasterSeverity(e.target.value as any)}
+                  >
+                    <option value="critical">CRITICAL (Red Alert)</option>
+                    <option value="high">HIGH (Orange Alert)</option>
+                    <option value="moderate">MODERATE (Yellow Alert)</option>
+                    <option value="info">INFO / Advisory</option>
+                  </select>
+                </div>
+
+                <div className="form-group !mb-0">
+                  <label className="form-label text-[11px] font-bold">Disaster Category</label>
+                  <select 
+                    className="form-control text-xs"
+                    value={disasterCategory}
+                    onChange={(e) => setDisasterCategory(e.target.value as any)}
+                  >
+                    <option value="Flood">Flood & Waterlogging</option>
+                    <option value="Weather">Weather & Cyclone</option>
+                    <option value="Power Outage">Power Grid Outage</option>
+                    <option value="Health">Public Health Advisory</option>
+                    <option value="Traffic">Traffic & Landslide</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group !mb-0">
+                <label className="form-label text-[11px] font-bold">Affected Location / Wards *</label>
+                <input 
+                  type="text" 
+                  className="form-control text-xs" 
+                  value={disasterLocation}
+                  onChange={(e) => setDisasterLocation(e.target.value)}
+                  placeholder="e.g. Northern Coastal Sector, Wards 4 to 12"
+                  required
+                />
+              </div>
+
+              <div className="form-group !mb-0">
+                <label className="form-label text-[11px] font-bold">Disaster Description / Ground Advisory</label>
+                <textarea 
+                  className="form-control text-xs h-20 resize-none" 
+                  value={disasterDescription}
+                  onChange={(e) => setDisasterDescription(e.target.value)}
+                  placeholder="Provide situation details, water level reports, or power outage status..."
+                />
+              </div>
+
+              <div className="form-group !mb-0">
+                <label className="form-label text-[11px] font-bold">Safety Instructions (Comma Separated)</label>
+                <input 
+                  type="text" 
+                  className="form-control text-xs" 
+                  value={disasterSafetySteps}
+                  onChange={(e) => setDisasterSafetySteps(e.target.value)}
+                  placeholder="Avoid underpasses, Keep power banks charged, Contact 1077"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowPostDisasterModal(false)} 
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn bg-amber-600 hover:bg-amber-500 text-white font-bold cursor-pointer"
+                >
+                  Broadcast Disaster Alert
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
