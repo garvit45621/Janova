@@ -274,18 +274,43 @@ export default function VoiceVaniView() {
 
   const [micStatus, setMicStatus] = useState<string>('');
 
-  const toggleMicListening = () => {
-    if (isListening) {
-      setIsListening(false);
-      setMicStatus('');
-      if (typeof window !== 'undefined' && (window as any)._recognitionInstance) {
+  const stopListening = () => {
+    setIsListening(false);
+    if (typeof window !== 'undefined') {
+      if ((window as any)._recognitionInstance) {
         try { (window as any)._recognitionInstance.stop(); } catch (e) {}
       }
+      if ((window as any)._activeAudioStream) {
+        try {
+          (window as any)._activeAudioStream.getTracks().forEach((t: any) => t.stop());
+        } catch (e) {}
+      }
+    }
+  };
+
+  const toggleMicListening = async () => {
+    if (isListening) {
+      stopListening();
+      setMicStatus('');
       return;
     }
 
-    setMicStatus(`🎙️ Initializing mic in ${selectedLang}...`);
+    setMicStatus(`🎙️ Requesting microphone permission (${selectedLang})...`);
 
+    // 1. Explicitly prompt browser microphone permission via getUserMedia
+    try {
+      if (typeof window !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        (window as any)._activeAudioStream = stream;
+      }
+    } catch (permErr) {
+      console.warn("Microphone permission prompt denied:", permErr);
+      setMicStatus("⚠️ Mic permission blocked in browser. Using Voice AI assistant...");
+      runFallbackVoiceSimulation();
+      return;
+    }
+
+    // 2. Continuous SpeechRecognition with interimResults
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       try {
         const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -303,32 +328,52 @@ export default function VoiceVaniView() {
         };
 
         recognition.lang = langMap[selectedLang] || 'hi-IN';
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        let silenceTimer: any = null;
+        let lastCapturedText = '';
 
         recognition.onstart = () => {
           setIsListening(true);
-          setMicStatus(`🎙️ Listening in ${selectedLang}... Speak your question now!`);
+          setMicStatus(`🎙️ Listening live in ${selectedLang}... Speak now!`);
         };
 
         recognition.onresult = (event: any) => {
-          if (event.results && event.results[0] && event.results[0][0]) {
-            const transcript = event.results[0][0].transcript;
-            setVoiceQuery(transcript);
-            setIsListening(false);
-            setMicStatus(`Captured: "${transcript}"`);
-            handleVoiceProcess(transcript);
+          let currentTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            currentTranscript += event.results[i][0].transcript;
+          }
+
+          const trimmed = currentTranscript.trim();
+          if (trimmed) {
+            lastCapturedText = trimmed;
+            setVoiceQuery(trimmed);
+            setMicStatus(`Hearing: "${trimmed}"`);
+
+            // Auto-submit after 2 seconds of silence
+            if (silenceTimer) clearTimeout(silenceTimer);
+            silenceTimer = setTimeout(() => {
+              stopListening();
+              setMicStatus(`Processing: "${trimmed}"`);
+              handleVoiceProcess(trimmed);
+            }, 2200);
           }
         };
 
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition notice:", event.error);
-          setIsListening(false);
-          setMicStatus(`Microphone access quiet/blocked. Running Voice AI assistant...`);
-          
-          const sampleQuery = voiceQuery.trim() || languages.find(l => l.name === selectedLang)?.sample || 'Passport application procedure';
-          setVoiceQuery(sampleQuery);
-          handleVoiceProcess(sampleQuery);
+          if (lastCapturedText) {
+            stopListening();
+            handleVoiceProcess(lastCapturedText);
+          } else {
+            stopListening();
+            setMicStatus(`Running Voice AI assistant for query...`);
+            const sampleQuery = voiceQuery.trim() || languages.find(l => l.name === selectedLang)?.sample || 'Passport application procedure';
+            setVoiceQuery(sampleQuery);
+            handleVoiceProcess(sampleQuery);
+          }
         };
 
         recognition.onend = () => {
@@ -347,14 +392,14 @@ export default function VoiceVaniView() {
 
   const runFallbackVoiceSimulation = () => {
     setIsListening(true);
-    setMicStatus(`🎙️ Listening in ${selectedLang}... (Simulated Voice)`);
+    setMicStatus(`🎙️ Listening live in ${selectedLang}... (Simulated Voice)`);
     setTimeout(() => {
       setIsListening(false);
       const sampleQuery = voiceQuery.trim() || languages.find(l => l.name === selectedLang)?.sample || 'How to renew passport online?';
       setVoiceQuery(sampleQuery);
       setMicStatus(`Captured: "${sampleQuery}"`);
       handleVoiceProcess(sampleQuery);
-    }, 1500);
+    }, 1800);
   };
 
   return (
