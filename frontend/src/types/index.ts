@@ -31,7 +31,7 @@ export interface Service {
   id: number;
   title: string;
   description: string;
-  category: 'Certificates' | 'Education' | 'Business' | 'Healthcare' | 'Agriculture' | 'Taxation' | 'Identity Documents';
+  category: 'Certificates' | 'Education' | 'Business' | 'Healthcare' | 'Agriculture' | 'Taxation' | 'Identity Documents' | 'Utilities & Housing' | 'Welfare & Social Safety';
   eligibility?: string;
   required_documents: string[];
   estimated_time?: string;

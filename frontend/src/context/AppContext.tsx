@@ -138,6 +138,39 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     },
     {
       id: 4,
+      title: "Voter ID Card Registration (Form 6)",
+      description: "Register as a voter in national, state, and local body electoral rolls.",
+      category: "Identity Documents",
+      eligibility: "Indian citizens aged 18 and above",
+      required_documents: ["Aadhaar_Card.pdf", "Age_Proof.pdf", "Passport_Photo.png"],
+      estimated_time: "7-10 Days",
+      application_steps: ["NVSP Portal Form 6", "BLO Field Verification", "Electoral Roll Entry", "EPIC Dispatch"],
+      official_url: "https://voters.eci.gov.in"
+    },
+    {
+      id: 5,
+      title: "Driving License & Vehicle RC (Parivahan)",
+      description: "Issue Learner's or Permanent Driving License and digital Vehicle Registration Certificate.",
+      category: "Identity Documents",
+      eligibility: "Age 18+ with valid medical fitness",
+      required_documents: ["Aadhaar_Card.pdf", "Learner_License_No.pdf", "Address_Proof.pdf"],
+      estimated_time: "7 Days",
+      application_steps: ["Parivahan Portal Slot Booking", "RTO Driving Track Test", "DL Print & Dispatch"],
+      official_url: "https://parivahan.gov.in"
+    },
+    {
+      id: 6,
+      title: "One Nation One Ration Card (ONORC)",
+      description: "National portability registration for subsidized foodgrain quota across any PDS shop.",
+      category: "Identity Documents",
+      eligibility: "NFSA / PHH / Antyodaya beneficiaries",
+      required_documents: ["Family_Aadhaar_Numbers.pdf", "Ration_Card_Number.pdf"],
+      estimated_time: "2 Days",
+      application_steps: ["Submit Aadhaar Seeding", "PDS FPS Machine Biometric Validation", "Instant Activation"],
+      official_url: "https://nfsa.gov.in"
+    },
+    {
+      id: 7,
       title: "Income & Asset Certificate",
       description: "Official revenue department certificate validating annual family income for concessions & EWS quotas.",
       category: "Certificates",
@@ -148,7 +181,40 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       official_url: "https://edistrict.gov.in"
     },
     {
-      id: 5,
+      id: 8,
+      title: "Caste & Community Certificate (SC/ST/OBC)",
+      description: "Government certification of social community status for educational and recruitment reservations.",
+      category: "Certificates",
+      eligibility: "State domicile residents",
+      required_documents: ["Father_Caste_Certificate.pdf", "School_Leaving_Certificate.pdf", "Aadhaar_Card.pdf"],
+      estimated_time: "14 Days",
+      application_steps: ["Submit Application", "Tahsildar Inquiry", "Digital Signature Certificate Issue"],
+      official_url: "https://edistrict.gov.in"
+    },
+    {
+      id: 9,
+      title: "Domicile & Residence Certificate",
+      description: "Legal proof of continuous residence in state required for local jobs and university seats.",
+      category: "Certificates",
+      eligibility: "Residents living 3+ years in state",
+      required_documents: ["Property_Tax_Receipt.pdf", "Electricity_Bill.pdf", "Aadhaar_Card.pdf"],
+      estimated_time: "10 Days",
+      application_steps: ["E-District Portal Submit", "Patwari Field Audit", "Download Signed Certificate"],
+      official_url: "https://edistrict.gov.in"
+    },
+    {
+      id: 10,
+      title: "Digital Birth Certificate Issuance",
+      description: "Official birth registration under Civil Registration System (CRS) with QR verification.",
+      category: "Certificates",
+      eligibility: "Child born in hospital or home jurisdiction",
+      required_documents: ["Hospital_Discharge_Slip.pdf", "Parents_Aadhaar_Card.pdf"],
+      estimated_time: "5 Days",
+      application_steps: ["CRS Portal Registration", "Health Inspector Signoff", "Download QR Signed Certificate"],
+      official_url: "https://crsorgi.gov.in"
+    },
+    {
+      id: 11,
       title: "Property Khata & Mutation Registration",
       description: "Transfer property ownership records in municipal revenue register after sale or inheritance.",
       category: "Certificates",
@@ -159,7 +225,40 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       official_url: "https://landrecords.gov.in"
     },
     {
-      id: 6,
+      id: 12,
+      title: "National Scholarship Portal (NSP)",
+      description: "Central portal for pre-matric, post-matric, and merit-cum-means student scholarships.",
+      category: "Education",
+      eligibility: "Students with family income below ₹2.5 Lakh",
+      required_documents: ["College_Bonafide.pdf", "Income_Certificate.pdf", "Bank_Passbook.pdf"],
+      estimated_time: "30 Days",
+      application_steps: ["NSP Student Login", "Select Welfare Scheme", "Institute Verification", "DBT Transfer"],
+      official_url: "https://scholarships.gov.in"
+    },
+    {
+      id: 13,
+      title: "State Student Travel Concession Pass",
+      description: "Discounted monthly bus & metro pass for school and university students.",
+      category: "Education",
+      eligibility: "Enrolled full-time students",
+      required_documents: ["School_College_ID.pdf", "Fee_Receipt.pdf", "Passport_Photo.png"],
+      estimated_time: "2 Days",
+      application_steps: ["Transport Portal Submit", "Institute Online Approval", "Smart Card Issue"],
+      official_url: "https://transport.gov.in"
+    },
+    {
+      id: 14,
+      title: "Vidya Lakshmi Education Loan Subsidy",
+      description: "Single window portal for applying for bank education loans with interest subsidies.",
+      category: "Education",
+      eligibility: "Students admitted to higher education institutes",
+      required_documents: ["Admission_Offer_Letter.pdf", "Fee_Structure.pdf", "Marksheets_10th_12th.pdf"],
+      estimated_time: "15 Days",
+      application_steps: ["Register Portal", "Common Educational Loan Form", "Bank Sanction"],
+      official_url: "https://www.vidyalakshmi.co.in"
+    },
+    {
+      id: 15,
       title: "FSSAI Food Business License",
       description: "Mandatory food safety registration for cloud kitchens, restaurants, and food retailers.",
       category: "Business",
@@ -170,7 +269,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       official_url: "https://foscos.fssai.gov.in"
     },
     {
-      id: 7,
+      id: 16,
       title: "MSME Udyam Registration",
       description: "Free instant government registration for micro, small, and medium enterprises.",
       category: "Business",
@@ -181,7 +280,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       official_url: "https://udyamregistration.gov.in"
     },
     {
-      id: 8,
+      id: 17,
+      title: "GSTIN Identification Number Registration",
+      description: "Goods and Services Tax registration for businesses with turnover exceeding threshold.",
+      category: "Business",
+      eligibility: "Traders, service providers & e-commerce sellers",
+      required_documents: ["PAN_Card.pdf", "Bank_Cancelled_Cheque.pdf", "Address_Proof.pdf"],
+      estimated_time: "3-5 Days",
+      application_steps: ["GST Portal Form REG-01", "Aadhaar Biometric e-KYC", "GSTIN Allotment"],
+      official_url: "https://www.gst.gov.in"
+    },
+    {
+      id: 18,
       title: "Ayushman Bharat Golden Health Card",
       description: "Cashless health insurance card providing ₹5 Lakh per family per year coverage.",
       category: "Healthcare",
@@ -190,6 +300,127 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       estimated_time: "3 Days",
       application_steps: ["E-KYC Verification at CSC Center", "Approval by NHA", "Card Printout"],
       official_url: "https://pmjay.gov.in"
+    },
+    {
+      id: 19,
+      title: "ABHA Health ID (Digital Health Account)",
+      description: "Create 14-digit ABHA number to link medical records, lab reports, and prescriptions securely.",
+      category: "Healthcare",
+      eligibility: "All citizens",
+      required_documents: ["Aadhaar_Card.pdf"],
+      estimated_time: "Instant (1 Minute)",
+      application_steps: ["Enter Aadhaar Number", "Verify OTP", "Instant ABHA Card Issue"],
+      official_url: "https://abha.abdm.gov.in"
+    },
+    {
+      id: 20,
+      title: "Unique Disability ID (UDID Card)",
+      description: "National ID for persons with disabilities providing healthcare benefits, travel subsidies, and equipment.",
+      category: "Healthcare",
+      eligibility: "Persons with benchmark disability 40%+",
+      required_documents: ["Medical_Disability_Certificate.pdf", "Aadhaar_Card.pdf", "Photo.jpg"],
+      estimated_time: "15 Days",
+      application_steps: ["Swavlamban Portal Submit", "Medical Board Assessment", "UDID Card Dispatch"],
+      official_url: "https://www.swavlambancard.gov.in"
+    },
+    {
+      id: 21,
+      title: "Kisan Credit Card (KCC) Limit Sanction",
+      description: "Concessional agricultural credit loan up to ₹3 Lakh at subsidized interest rates.",
+      category: "Agriculture",
+      eligibility: "Farmers, tenant cultivators, & SHGs",
+      required_documents: ["Land_Pahani_Record.pdf", "Aadhaar_Card.pdf", "Khasra_Copy.pdf"],
+      estimated_time: "14 Days",
+      application_steps: ["Submit KCC Application to Bank", "Land Record Verification", "Credit Card Issue"],
+      official_url: "https://pmkisan.gov.in"
+    },
+    {
+      id: 22,
+      title: "PM-Kisan e-KYC & Land Seeding",
+      description: "Complete mandatory biometric e-KYC and land parcel mapping to receive quarterly ₹2,000 instalments.",
+      category: "Agriculture",
+      eligibility: "Small and marginal landholding farmers",
+      required_documents: ["Aadhaar_Card.pdf", "Land_Record.pdf"],
+      estimated_time: "Instant",
+      application_steps: ["PM-Kisan Portal OTP Authentication", "Aadhaar Bank Seeding", "Status Active"],
+      official_url: "https://pmkisan.gov.in"
+    },
+    {
+      id: 23,
+      title: "Income Tax Return (ITR-1 / ITR-4) Filing",
+      description: "Direct online tax return portal for salaried and small business taxpayers.",
+      category: "Taxation",
+      eligibility: "Taxpayers with taxable income",
+      required_documents: ["Form_16.pdf", "Bank_Statements.pdf", "PAN_Card.pdf"],
+      estimated_time: "1 Day",
+      application_steps: ["Pre-fill ITR Data", "Review Deductions 80C/80D", "E-Verify via Aadhaar OTP"],
+      official_url: "https://eportal.incometax.gov.in"
+    },
+    {
+      id: 24,
+      title: "Property Tax Self-Assessment & Payment",
+      description: "Pay annual municipal property tax online with early bird rebate benefits.",
+      category: "Taxation",
+      eligibility: "Property owners",
+      required_documents: ["Property_PID_Number.pdf", "Previous_Tax_Challan.pdf"],
+      estimated_time: "Instant",
+      application_steps: ["Enter Property PID", "View Calculated Assessment", "Pay via UPI/NetBanking"],
+      official_url: "https://bbmptax.karnataka.gov.in"
+    },
+    {
+      id: 25,
+      title: "Pradhan Mantri Awas Yojana (PMAY) Housing",
+      description: "Credit linked subsidy scheme (CLSS) offering interest subsidy on home loans.",
+      category: "Utilities & Housing",
+      eligibility: "First-time home buyers with family income < ₹18 Lakh",
+      required_documents: ["Income_Proof.pdf", "Property_Construction_Plan.pdf", "Aadhaar_Card.pdf"],
+      estimated_time: "45 Days",
+      application_steps: ["PMAY Portal Registration", "Primary Lending Institution Review", "Subsidy Credit"],
+      official_url: "https://pmaymis.gov.in"
+    },
+    {
+      id: 26,
+      title: "New Domestic Electricity Connection",
+      description: "Apply for single-phase or three-phase domestic power supply connection with smart meter.",
+      category: "Utilities & Housing",
+      eligibility: "Property owner or tenant with NOC",
+      required_documents: ["Ownership_Deed.pdf", "Aadhaar_Card.pdf", "Wiring_Test_Certificate.pdf"],
+      estimated_time: "5 Days",
+      application_steps: ["DISCOM Portal Form", "Inspection & Meter Sanction", "Line Connection"],
+      official_url: "https://bescom.karnataka.gov.in"
+    },
+    {
+      id: 27,
+      title: "PM Ujjwala LPG Gas Connection",
+      description: "Deposit-free LPG cylinder connection with stove for eligible low-income households.",
+      category: "Utilities & Housing",
+      eligibility: "Adult women of BPL households",
+      required_documents: ["Ration_Card.pdf", "Aadhaar_Card.pdf", "Bank_Passbook.pdf"],
+      estimated_time: "7 Days",
+      application_steps: ["LPG Distributor Submission", "OMC De-duplication Check", "Connection Release"],
+      official_url: "https://www.pmuy.gov.in"
+    },
+    {
+      id: 28,
+      title: "e-Shram Unorganized Worker Card",
+      description: "National database card for informal workers providing ₹2 Lakh accidental insurance cover.",
+      category: "Welfare & Social Safety",
+      eligibility: "Unorganized workers aged 16-59",
+      required_documents: ["Aadhaar_Card.pdf", "Bank_Account.pdf"],
+      estimated_time: "Instant",
+      application_steps: ["e-Shram Portal Self Registration", "Aadhaar OTP verification", "Instant UAN Card Issue"],
+      official_url: "https://eshram.gov.in"
+    },
+    {
+      id: 29,
+      title: "Indira Gandhi National Old Age Pension",
+      description: "Monthly pension support for senior citizens living below poverty line.",
+      category: "Welfare & Social Safety",
+      eligibility: "Seniors aged 60+ in BPL category",
+      required_documents: ["Age_Proof.pdf", "BPL_Ration_Card.pdf", "Aadhaar_Card.pdf"],
+      estimated_time: "30 Days",
+      application_steps: ["Social Welfare Application", "Gram Sabha / Ward Verification", "Monthly Direct Transfer"],
+      official_url: "https://nsap.nic.in"
     }
   ]);
   const [schemes, setSchemes] = useState<Scheme[]>([
@@ -290,29 +521,74 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     {
       id: 1,
       name: "Birth of Child",
-      description: "Complete roadmap for registering newborn birth, securing birth certificate, and Baal Aadhaar enrollment.",
-      required_registrations: ["Hospital Discharge Record", "Municipal Birth Registration Form", "Child Aadhaar Enrollment"],
-      services_needed: ["Birth Certificate Issuance Service", "Baal Aadhaar Biometric Mapping", "PM Matru Vandana Yojana"],
-      documents_required: ["Parents Joint Aadhaar", "Parents Marriage Certificate", "Hospital Birth Slip"],
+      description: "Complete roadmap for registering newborn birth, securing official birth certificate, adding child to Aadhaar, and enrolling in national child immunization schemes.",
+      required_registrations: ["Hospital Discharge Record", "Municipal Birth Registration Form", "Child Aadhaar Enrollment (Baal Aadhaar)"],
+      services_needed: ["Birth Certificate Issuance Service", "Baal Aadhaar Biometric Mapping", "PM Matru Vandana Yojana Maternity Benefit"],
+      documents_required: ["Parents Joint Aadhaar", "Parents Marriage Certificate", "Hospital Birth Slip signed by Doctor"],
       timeline_est: "7-14 Days post birth"
     },
     {
       id: 2,
       name: "Marriage",
-      description: "Step-by-step legal marriage registration under Special Marriage Act and issuing official Marriage Certificate.",
-      required_registrations: ["Application under Hindu/Special Marriage Act", "Notice of Intended Marriage"],
-      services_needed: ["Official Marriage Certificate Service", "Passport Spouse Name Update Service"],
-      documents_required: ["Age Proof of Both Spouses", "Address Proof", "Wedding Photos & Joint Affidavit"],
+      description: "Step-by-step legal marriage registration under Hindu Marriage Act / Special Marriage Act, issuing official Marriage Certificate, and passport surname updates.",
+      required_registrations: ["Application under Hindu/Special Marriage Act", "Notice of Intended Marriage (30-day notice)"],
+      services_needed: ["Official Marriage Certificate Service", "Passport Name & Spouse Addition Service", "Joint Bank Account & Nominee Updates"],
+      documents_required: ["Age Proof of Both Spouses (10th Marksheet/Passport)", "Address Proof of Both Spouses", "Joint Wedding Photos & Wedding Card", "Affidavit & 3 Witness Aadhaar Proofs"],
       timeline_est: "15-35 Days"
     },
     {
       id: 3,
+      name: "College Admission",
+      description: "Acquiring national student scholarships, state transport travel concessions, caste/income quota certificates, and educational loan subsidies.",
+      required_registrations: ["National Scholarship Portal (NSP) Student Account", "State E-District Student Concession Registration"],
+      services_needed: ["Income & Caste Verification Certificate", "Vidya Lakshmi Education Loan Scheme", "Student Bus & Metro Concession Pass"],
+      documents_required: ["10th & 12th Board Marksheets", "College Allotment Letter", "Family Income Certificate", "Aadhaar Card"],
+      timeline_est: "5-15 Days"
+    },
+    {
+      id: 4,
+      name: "Employment",
+      description: "Onboarding checklist for joining workforce, EPFO Universal Account Number (UAN) generation, Form 11 declaration, and e-Shram worker enrollment.",
+      required_registrations: ["EPFO UAN Generation & Aadhaar KYC Seeding", "Professional Tax Registration"],
+      services_needed: ["EPFO Passbook & Nominee Addition", "Income Tax PAN Card Linking", "NPS Pension Account Creation"],
+      documents_required: ["Offer Letter & Relieving Certificate", "PAN & Aadhaar Card", "Cancelled Bank Cheque for Direct Payroll"],
+      timeline_est: "1-3 Days"
+    },
+    {
+      id: 5,
+      name: "Starting Business",
+      description: "End-to-end setup guide for registering a company or sole proprietorship, obtaining GSTIN, MSME Udyam registration, and FSSAI/Trade licenses.",
+      required_registrations: ["Ministry of Corporate Affairs (SPICe+) Incorporation", "MSME Udyam Registration Portal"],
+      services_needed: ["GSTIN Identification Number Service", "FSSAI Food License / Municipal Trade License", "Current Commercial Bank Account Opening"],
+      documents_required: ["PAN Card & Digital Signature Certificate (DSC)", "Proof of Business Registered Office", "NOC from Property Landlord"],
+      timeline_est: "7-14 Days"
+    },
+    {
+      id: 6,
       name: "Property Purchase",
-      description: "End-to-end legal compliance checklist for purchasing residential property, stamp duty, and sale deed registration.",
-      required_registrations: ["Encumbrance Certificate Verification", "Stamp Duty & E-Challan Payment", "Sub-Registrar Sale Deed"],
-      services_needed: ["Encumbrance Certificate Download", "Property Mutation & Khata Transfer", "Property Tax Linkage"],
-      documents_required: ["Mother Deed & Chain Deeds", "RERA Registration Certificate", "Property Tax Clearance"],
+      description: "End-to-end legal compliance checklist for purchasing residential land or apartment, property valuation, stamp duty payment, and sub-registrar deed registration.",
+      required_registrations: ["Encumbrance Certificate (EC) Verification", "Stamp Duty & E-Challan Payment", "Sub-Registrar Sale Deed Registration"],
+      services_needed: ["Encumbrance Certificate Download", "Property Mutation & Khata Transfer", "Property Tax Account Number (PID/Khata) Linkage"],
+      documents_required: ["Mother Deed & Chain of Title Deeds", "RERA Registration Certificate of Builder", "Property Tax Clearance Receipt", "Approved Building Sanction Plan"],
       timeline_est: "20-40 Days"
+    },
+    {
+      id: 7,
+      name: "Retirement",
+      description: "Navigating National Pension System (NPS), EPF withdrawal, Digital Life Certificate (Jeevan Pramaan) for pensioners, and Senior Citizen Health Coverage.",
+      required_registrations: ["Digital Life Certificate (Jeevan Pramaan) Submission", "EPF Final Settlement & Pension Transfer Form 19/10C"],
+      services_needed: ["Jeevan Pramaan Face Authentication Service", "Senior Citizen Identity Card Service", "Ayushman Bharat Senior Citizen (70+) Coverage"],
+      documents_required: ["Pension Payment Order (PPO) Number", "Aadhaar Card linked with Bank Account", "Bank Passbook with IFSC", "Retirement Relief Certificate"],
+      timeline_est: "5-15 Days"
+    },
+    {
+      id: 8,
+      name: "Death in Family",
+      description: "Compassionate guide for registering legal death certificate, municipal cremation/burial records, legal heir certificate, and bank/insurance nominee claims.",
+      required_registrations: ["Hospital Cause of Death Certificate", "Municipal Death Register Entry"],
+      services_needed: ["Digital Death Certificate Service", "Legal Heir / Succession Certificate Service", "Insurance & EPF Family Pension Claims"],
+      documents_required: ["Medical Attendant Death Summary", "Deceased Aadhaar & PAN Card", "Applicant Relationship Proof & Ration Card"],
+      timeline_est: "3-10 Days"
     }
   ]);
 
